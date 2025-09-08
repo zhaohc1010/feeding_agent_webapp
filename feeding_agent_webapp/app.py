@@ -64,7 +64,7 @@ def index():
 @app.route('/predict', methods=['POST'])
 def predict():
     """
-    接收前端数据，执行逻辑，仅返回预测结果。
+    接收前端数据，执行逻辑，并根据是否有备注决定决策流程。
     """
     try:
         user_data = request.json
@@ -84,8 +84,11 @@ def predict():
         formula_prediction_tuple = calculate_from_formulas(user_data)
         formula_prediction, _ = formula_prediction_tuple if formula_prediction_tuple else (None, "计算失败")
         final_recommendation = ""
+
         if lgbm_prediction is not None and formula_prediction is not None:
-            if user_data.get('remarks'):
+            # 【重要修复】检查备注是否存在且去除空格后不为空
+            if user_data.get('remarks') and user_data.get('remarks').strip():
+                # 如果有真实备注，启动智能决策模块
                 knowledge = read_knowledge_base()
                 historical_data = read_historical_data()
                 final_recommendation = get_final_decision_with_remarks(
@@ -93,8 +96,9 @@ def predict():
                     knowledge if knowledge else "知识库未找到或读取失败。", historical_data
                 )
             else:
+                # 没有备注，默认使用LightGBM的结果
                 final_recommendation = (
-                    f"根据LightGBM模型的计算，建议的投喂量为 {lgbm_prediction:.4f} 公斤。\n"
+                    f"根据LightGBM模型的计算，建议的投喂量为 {lgbm_prediction:.4f} 公斤。\n\n"
                     f"由于未提供备注信息，系统默认采纳此数据驱动模型的预测结果。\n\n"
                     f"【最终投喂量】: {lgbm_prediction:.4f}"
                 )
