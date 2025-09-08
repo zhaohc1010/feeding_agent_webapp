@@ -64,11 +64,10 @@ def index():
 @app.route('/predict', methods=['POST'])
 def predict():
     """
-    接收前端数据，执行逻辑，并返回预测结果和更新后的历史记录。
+    接收前端数据，执行逻辑，仅返回预测结果。
     """
     try:
         user_data = request.json
-        # ... (数据类型转换逻辑保持不变) ...
         for key in user_data:
             if key in ['system_id', 'month_day', 'remarks', 'actual_feeding_amount']: continue
             if user_data[key]:
@@ -81,7 +80,6 @@ def predict():
         else:
             user_data['actual_feeding_amount'] = float(user_data.get('actual_feeding_amount', 0))
 
-        # ... (模型调用和决策逻辑保持不变) ...
         lgbm_prediction = predict_with_lightgbm(user_data)
         formula_prediction_tuple = calculate_from_formulas(user_data)
         formula_prediction, _ = formula_prediction_tuple if formula_prediction_tuple else (None, "计算失败")
@@ -108,8 +106,6 @@ def predict():
         if "失败" not in final_recommendation:
             os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
             log_data_to_excel(user_data, lgbm_prediction, formula_prediction, final_recommendation)
-            # 在记录成功后，获取更新后的历史记录HTML
-            response_data['history_table'] = get_history_table_html()
 
         return jsonify(response_data)
 
@@ -121,7 +117,7 @@ def predict():
 @app.route('/download_log')
 def download_log():
     """
-    提供Excel日志文件的下载功能 (此函数逻辑不变)。
+    提供Excel日志文件的下载功能。
     """
     try:
         if not os.path.exists(LOG_FILE_PATH):
