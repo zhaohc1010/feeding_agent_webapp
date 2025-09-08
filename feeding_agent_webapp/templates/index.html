@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>智能投喂决策系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -80,6 +80,9 @@
                 <h2 class="text-xl font-bold">历史记录</h2>
                 <div class="flex items-center space-x-2">
                      <div id="save-status" class="text-sm text-gray-500 transition-opacity duration-300 opacity-0"></div>
+                     <button id="add-row-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">
+                        新增一行
+                    </button>
                      <button id="save-changes-btn" class="hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">
                         保存更改
                     </button>
@@ -97,6 +100,7 @@
     <script>
         // On page load, try to restore the state from sessionStorage
         window.addEventListener('DOMContentLoaded', () => {
+            // Restore form data
             const savedFormData = sessionStorage.getItem('formData');
             if (savedFormData) {
                 const data = JSON.parse(savedFormData);
@@ -107,6 +111,7 @@
                     }
                 }
             }
+            // Restore prediction result
             const savedResult = sessionStorage.getItem('predictionResult');
             if (savedResult) {
                 const result = JSON.parse(savedResult);
@@ -120,6 +125,20 @@
                     resultsContent.innerHTML = `<p class="text-red-500 font-bold">上次请求出错:</p><p class="text-red-700">${result.error}</p>`;
                 }
             }
+            // Restore and display status message from actions like save/add
+            const statusMessage = sessionStorage.getItem('statusMessage');
+            if (statusMessage) {
+                const { text, type } = JSON.parse(statusMessage);
+                const statusDiv = document.getElementById('save-status');
+                statusDiv.textContent = text;
+                statusDiv.classList.add(type === 'success' ? 'text-green-500' : 'text-red-500');
+                statusDiv.classList.add('opacity-100');
+                setTimeout(() => {
+                    statusDiv.classList.remove('opacity-100');
+                }, 3000);
+                sessionStorage.removeItem('statusMessage');
+            }
+
             sessionStorage.removeItem('formData');
             sessionStorage.removeItem('predictionResult');
         });
@@ -163,12 +182,14 @@
             window.location.reload();
         });
 
-        // ----- NEW SCRIPT FOR EDITABLE TABLE -----
+        // ----- SCRIPT FOR EDITABLE TABLE AND ADDING ROWS -----
         const historyContainer = document.getElementById('history-table-container');
         const saveBtn = document.getElementById('save-changes-btn');
+        const addBtn = document.getElementById('add-row-btn');
         const saveStatus = document.getElementById('save-status');
         let changesToSave = {};
 
+        // Listen for edits in the table
         historyContainer.addEventListener('input', (event) => {
             const cell = event.target;
             if (cell.tagName === 'TD' && cell.isContentEditable) {
@@ -185,6 +206,7 @@
             }
         });
 
+        // Handle Save Changes button
         saveBtn.addEventListener('click', async () => {
             const promises = [];
             for (const index in changesToSave) {
@@ -213,18 +235,36 @@
 
                 await Promise.all(promises);
 
-                saveStatus.textContent = '保存成功!';
-                saveStatus.classList.add('text-green-500');
-
-                changesToSave = {};
-                saveBtn.classList.add('hidden');
+                sessionStorage.setItem('statusMessage', JSON.stringify({ text: '保存成功!', type: 'success' }));
+                window.location.reload();
 
             } catch (error) {
                 console.error('保存失败:', error);
-                saveStatus.textContent = `保存失败: ${error.error || '未知错误'}`;
+                const errorMessage = `保存失败: ${error.error || '未知错误'}`;
+                saveStatus.textContent = errorMessage;
                 saveStatus.classList.add('text-red-500');
+                 setTimeout(() => {
+                    saveStatus.classList.remove('opacity-100');
+                }, 3000);
+            }
+        });
 
-            } finally {
+        // Handle Add New Row button
+        addBtn.addEventListener('click', async () => {
+            saveStatus.textContent = '正在新增...';
+            saveStatus.classList.remove('text-red-500', 'text-green-500');
+            saveStatus.classList.add('opacity-100');
+            try {
+                const response = await fetch('/add_row', { method: 'POST' });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Failed to add row');
+                }
+                sessionStorage.setItem('statusMessage', JSON.stringify({ text: '新增成功! 请填写新行并保存。', type: 'success' }));
+                window.location.reload();
+            } catch (error) {
+                saveStatus.textContent = `新增失败: ${error.message}`;
+                saveStatus.classList.add('text-red-500');
                 setTimeout(() => {
                     saveStatus.classList.remove('opacity-100');
                 }, 3000);
