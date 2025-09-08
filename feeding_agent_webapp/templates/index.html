@@ -98,13 +98,28 @@
     </main>
 
     <script>
-        // On page load, try to restore the state from sessionStorage
-        window.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('prediction-form');
+        const resultsContent = document.getElementById('results-content');
+        const placeholder = document.getElementById('placeholder');
+
+        // Helper function to save current form and result state
+        function saveCurrentState() {
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            sessionStorage.setItem('formData', JSON.stringify(data));
+
+            const resultData = resultsContent.innerHTML;
+            if (resultData && !placeholder.classList.contains('hidden')) {
+                 sessionStorage.setItem('predictionResultHTML', resultData);
+            }
+        }
+
+        // Helper function to restore state
+        function restoreState() {
             // Restore form data
             const savedFormData = sessionStorage.getItem('formData');
             if (savedFormData) {
                 const data = JSON.parse(savedFormData);
-                const form = document.getElementById('prediction-form');
                 for (const key in data) {
                     if (form.elements[key]) {
                         form.elements[key].value = data[key];
@@ -112,20 +127,12 @@
                 }
             }
             // Restore prediction result
-            const savedResult = sessionStorage.getItem('predictionResult');
-            if (savedResult) {
-                const result = JSON.parse(savedResult);
-                const placeholder = document.getElementById('placeholder');
-                const resultsContent = document.getElementById('results-content');
+            const savedResultHTML = sessionStorage.getItem('predictionResultHTML');
+            if (savedResultHTML) {
                 placeholder.classList.add('hidden');
-                resultsContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                if (result.recommendation) {
-                    resultsContent.innerHTML = marked.parse(result.recommendation);
-                } else if (result.error) {
-                    resultsContent.innerHTML = `<p class="text-red-500 font-bold">上次请求出错:</p><p class="text-red-700">${result.error}</p>`;
-                }
+                resultsContent.innerHTML = savedResultHTML;
             }
-            // Restore and display status message from actions like save/add
+            // Restore and display status message
             const statusMessage = sessionStorage.getItem('statusMessage');
             if (statusMessage) {
                 const { text, type } = JSON.parse(statusMessage);
@@ -138,24 +145,27 @@
                 }, 3000);
                 sessionStorage.removeItem('statusMessage');
             }
-
+            // Clean up sessionStorage
             sessionStorage.removeItem('formData');
-            sessionStorage.removeItem('predictionResult');
-        });
+            sessionStorage.removeItem('predictionResultHTML');
+        }
+
+        // Run restore on page load
+        window.addEventListener('DOMContentLoaded', restoreState);
 
         // Handle form submission
-        document.getElementById('prediction-form').addEventListener('submit', async function(event) {
+        form.addEventListener('submit', async function(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
             const data = Object.fromEntries(formData.entries());
-            const placeholder = document.getElementById('placeholder');
             const spinner = document.getElementById('spinner');
-            const resultsContent = document.getElementById('results-content');
             const resultsArea = document.getElementById('results-area');
+
             resultsArea.scrollIntoView({ behavior: 'smooth' });
             placeholder.classList.add('hidden');
             resultsContent.innerHTML = '';
             spinner.classList.remove('hidden');
+
             try {
                 const response = await fetch('/predict', {
                     method: 'POST',
@@ -166,19 +176,25 @@
                 if (!response.ok) {
                     throw new Error(result.error || `HTTP 错误! 状态: ${response.status}`);
                 }
+
+                // On success, save everything and reload
+                const newResultHTML = marked.parse(result.recommendation);
                 sessionStorage.setItem('formData', JSON.stringify(data));
-                sessionStorage.setItem('predictionResult', JSON.stringify(result));
+                sessionStorage.setItem('predictionResultHTML', newResultHTML);
                 window.location.reload();
+
             } catch (error) {
+                // On error, save inputs and error message, then reload
+                const errorHTML = `<p class="text-red-500 font-bold">请求出错:</p><p class="text-red-700">${error.message}</p>`;
                 sessionStorage.setItem('formData', JSON.stringify(data));
-                sessionStorage.setItem('predictionResult', JSON.stringify({ error: error.message }));
+                sessionStorage.setItem('predictionResultHTML', errorHTML);
                 window.location.reload();
             }
         });
 
         // Handle manual refresh button
         document.getElementById('refresh-history-btn').addEventListener('click', () => {
-            sessionStorage.removeItem('predictionResult');
+            saveCurrentState();
             window.location.reload();
         });
 
@@ -235,6 +251,7 @@
 
                 await Promise.all(promises);
 
+                saveCurrentState();
                 sessionStorage.setItem('statusMessage', JSON.stringify({ text: '保存成功!', type: 'success' }));
                 window.location.reload();
 
@@ -251,6 +268,7 @@
 
         // Handle Add New Row button
         addBtn.addEventListener('click', async () => {
+            saveCurrentState(); // Save state before action
             saveStatus.textContent = '正在新增...';
             saveStatus.classList.remove('text-red-500', 'text-green-500');
             saveStatus.classList.add('opacity-100');
