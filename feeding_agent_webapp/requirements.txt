@@ -6,6 +6,5 @@ numpy
 openai
 scikit-learn == 1.4.2
 openpyxl
-
 gunicorn
 lightgbm
