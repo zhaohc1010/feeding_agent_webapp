@@ -11,6 +11,10 @@
         .form-input:focus { box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); border-color: #4299e1; }
         .prose h3 { margin-top: 0; }
         .prose p { margin-bottom: 0.5rem; }
+        [contenteditable]:focus {
+            background-color: #fefcbf; /* 黄色高亮 */
+            outline: 2px solid #facc15; /* 黄色边框 */
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -74,9 +78,15 @@
         <div class="mt-8 bg-white p-6 rounded-lg shadow-lg">
             <div class="flex justify-between items-center border-b pb-2 mb-4">
                 <h2 class="text-xl font-bold">历史记录</h2>
-                <button id="refresh-history-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">
-                    刷新
-                </button>
+                <div class="flex items-center space-x-2">
+                     <div id="save-status" class="text-sm text-gray-500 transition-opacity duration-300 opacity-0"></div>
+                     <button id="save-changes-btn" class="hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">
+                        保存更改
+                    </button>
+                    <button id="refresh-history-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">
+                        刷新
+                    </button>
+                </div>
             </div>
             <div id="history-table-container" class="overflow-x-auto">
                 {{ history_table|safe }}
@@ -87,7 +97,6 @@
     <script>
         // On page load, try to restore the state from sessionStorage
         window.addEventListener('DOMContentLoaded', () => {
-            // Restore form data
             const savedFormData = sessionStorage.getItem('formData');
             if (savedFormData) {
                 const data = JSON.parse(savedFormData);
@@ -98,25 +107,19 @@
                     }
                 }
             }
-
-            // Restore prediction result
             const savedResult = sessionStorage.getItem('predictionResult');
             if (savedResult) {
                 const result = JSON.parse(savedResult);
                 const placeholder = document.getElementById('placeholder');
                 const resultsContent = document.getElementById('results-content');
-
                 placeholder.classList.add('hidden');
                 resultsContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
                 if (result.recommendation) {
                     resultsContent.innerHTML = marked.parse(result.recommendation);
                 } else if (result.error) {
                     resultsContent.innerHTML = `<p class="text-red-500 font-bold">上次请求出错:</p><p class="text-red-700">${result.error}</p>`;
                 }
             }
-
-            // Clear the storage after restoring to prevent stale data on manual navigation
             sessionStorage.removeItem('formData');
             sessionStorage.removeItem('predictionResult');
         });
@@ -126,47 +129,106 @@
             event.preventDefault();
             const formData = new FormData(event.target);
             const data = Object.fromEntries(formData.entries());
-
             const placeholder = document.getElementById('placeholder');
             const spinner = document.getElementById('spinner');
             const resultsContent = document.getElementById('results-content');
             const resultsArea = document.getElementById('results-area');
-
             resultsArea.scrollIntoView({ behavior: 'smooth' });
             placeholder.classList.add('hidden');
             resultsContent.innerHTML = '';
             spinner.classList.remove('hidden');
-
             try {
                 const response = await fetch('/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-
                 const result = await response.json();
-
                 if (!response.ok) {
                     throw new Error(result.error || `HTTP 错误! 状态: ${response.status}`);
                 }
-
                 sessionStorage.setItem('formData', JSON.stringify(data));
                 sessionStorage.setItem('predictionResult', JSON.stringify(result));
-
                 window.location.reload();
-
             } catch (error) {
                 sessionStorage.setItem('formData', JSON.stringify(data));
                 sessionStorage.setItem('predictionResult', JSON.stringify({ error: error.message }));
-
                 window.location.reload();
             }
         });
 
         // Handle manual refresh button
         document.getElementById('refresh-history-btn').addEventListener('click', () => {
-            sessionStorage.removeItem('predictionResult'); // Keep form data on manual refresh
+            sessionStorage.removeItem('predictionResult');
             window.location.reload();
+        });
+
+        // ----- NEW SCRIPT FOR EDITABLE TABLE -----
+        const historyContainer = document.getElementById('history-table-container');
+        const saveBtn = document.getElementById('save-changes-btn');
+        const saveStatus = document.getElementById('save-status');
+        let changesToSave = {};
+
+        historyContainer.addEventListener('input', (event) => {
+            const cell = event.target;
+            if (cell.tagName === 'TD' && cell.isContentEditable) {
+                const row = cell.closest('tr');
+                const originalIndex = row.dataset.originalIndex;
+                const column = cell.dataset.column;
+                const value = cell.innerText;
+
+                if (!changesToSave[originalIndex]) {
+                    changesToSave[originalIndex] = {};
+                }
+                changesToSave[originalIndex][column] = value;
+                saveBtn.classList.remove('hidden');
+            }
+        });
+
+        saveBtn.addEventListener('click', async () => {
+            const promises = [];
+            for (const index in changesToSave) {
+                for (const column in changesToSave[index]) {
+                    const value = changesToSave[index][column];
+                    const payload = { index, column, value };
+
+                    const promise = fetch('/update_log', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).then(response => {
+                        if (!response.ok) {
+                           return response.json().then(err => Promise.reject(err));
+                        }
+                        return response.json();
+                    });
+                    promises.push(promise);
+                }
+            }
+
+            try {
+                saveStatus.textContent = '正在保存...';
+                saveStatus.classList.remove('text-red-500', 'text-green-500');
+                saveStatus.classList.add('opacity-100');
+
+                await Promise.all(promises);
+
+                saveStatus.textContent = '保存成功!';
+                saveStatus.classList.add('text-green-500');
+
+                changesToSave = {};
+                saveBtn.classList.add('hidden');
+
+            } catch (error) {
+                console.error('保存失败:', error);
+                saveStatus.textContent = `保存失败: ${error.error || '未知错误'}`;
+                saveStatus.classList.add('text-red-500');
+
+            } finally {
+                setTimeout(() => {
+                    saveStatus.classList.remove('opacity-100');
+                }, 3000);
+            }
         });
     </script>
 
