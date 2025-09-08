@@ -19,36 +19,48 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     """
-    渲染主页, 加载总预测次数和历史记录。
+    渲染主页, 加载全部历史记录。
     """
-    stats = {'total_predictions': 0}
-    history_table_html = "<h3>暂无历史记录</h3>"
+    history_table_html = "<p class='text-center text-gray-500'>暂无历史记录</p>"
 
     if os.path.exists(LOG_FILE_PATH):
         try:
             df = pd.read_excel(LOG_FILE_PATH)
             if not df.empty:
-                # 只计算总预测次数
-                stats['total_predictions'] = len(df)
+                # 读取所有记录并倒序，让最新的记录显示在最上面
+                all_records = df.iloc[::-1]
 
-                # 准备历史记录表格
-                latest_records = df.tail(20).iloc[::-1]  # 获取最新20条并倒序，让最新的在最上面
+                # 定义要在表格中显示的列
                 display_columns = [
                     'Date', 'age_in_days', 'weight', 'average_water_temp', 'average_do',
                     'LGBM_Prediction_kg', 'Final_Predicted_Amount_kg',
                     'Actual_Feeding_Amount_kg', 'Remarks'
                 ]
-                existing_columns = [col for col in display_columns if col in latest_records.columns]
-                history_table_html = latest_records[existing_columns].to_html(
-                    classes='history-table',
+                # 过滤掉不存在于DataFrame中的列名，以增强代码健壮性
+                existing_columns = [col for col in display_columns if col in all_records.columns]
+
+                # 将数据转换为HTML表格，并添加Tailwind CSS类
+                history_table_html = all_records[existing_columns].to_html(
+                    classes='min-w-full divide-y divide-gray-200',
+                    header=True,
                     index=False,
-                    na_rep='-'
+                    na_rep='-',
+                    border=0
                 )
+                # 为表头和表体添加更精细的样式
+                history_table_html = history_table_html.replace('<thead>', '<thead class="bg-gray-50">')
+                history_table_html = history_table_html.replace('<tbody>',
+                                                                '<tbody class="bg-white divide-y divide-gray-200">')
+                history_table_html = history_table_html.replace('<th>',
+                                                                '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">')
+                history_table_html = history_table_html.replace('<td>',
+                                                                '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">')
+
         except Exception as e:
             print(f"读取日志文件时出错: {e}")
-            history_table_html = "<h3>读取历史记录失败</h3>"
+            history_table_html = "<p class='text-center text-red-500'>读取历史记录失败</p>"
 
-    return render_template('index.html', stats=stats, history_table=history_table_html)
+    return render_template('index.html', history_table=history_table_html)
 
 
 @app.route('/predict', methods=['POST'])

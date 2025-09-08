@@ -3,142 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能投喂量预测智能体</title>
+    <title>智能投喂决策系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        :root {
-            --primary-color: #3B82F6; --primary-hover: #2563EB;
-            --bg-color: #F3F4F6; --card-bg-color: #FFFFFF;
-            --text-primary: #1F2937; --text-secondary: #6B7280;
-            --border-color: #E5E7EB;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-        body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-color); color: var(--text-primary); }
-
-        /* Header */
-        .header {
-            background-color: var(--card-bg-color);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-        }
-        .header-title h1 { font-size: 1.6rem; margin: 0; color: var(--primary-color); }
-        .header-actions { display: flex; align-items: center; gap: 1.5rem; }
-        .stat-display { font-size: 0.9rem; color: var(--text-secondary); }
-        .stat-display strong { color: var(--text-primary); font-size: 1.1rem; }
-        .btn { padding: 0.6em 1.2em; font-size: 0.9em; font-weight: 500; color: #fff; background-color: var(--primary-color); border: none; border-radius: 6px; text-decoration: none; cursor: pointer; transition: background-color 0.2s; }
-        .btn:hover { background-color: var(--primary-hover); }
-
-        /* Main Layout */
-        main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
-        .main-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2rem; }
-        .form-card { grid-column: span 5; }
-        .results-area { grid-column: span 7; }
-        .history-card { grid-column: span 12; margin-top: 1rem; }
-        .card { background-color: var(--card-bg-color); padding: 2rem; border-radius: 12px; box-shadow: var(--shadow); }
-
-        /* Form & Results */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-        fieldset { border: none; padding: 0; margin: 0 0 1.5rem; }
-        legend { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
-        .form-group { display: flex; flex-direction: column; }
-        label { margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9em; color: var(--text-secondary); }
-        input, textarea { padding: 0.8em; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1em; }
-        .results-area .placeholder { text-align: center; color: var(--text-secondary); padding: 4rem 1rem; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        #results-card { display: none; } #results-content { white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.95em; }
-        .spinner { display: none; margin: 4rem auto; width: 40px; height: 40px; border: 4px solid #E5E7EB; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* History Table */
-        .history-card h2 { margin-top: 0; }
-        .table-wrapper { max-height: 400px; overflow-y: auto; }
-        .history-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-        .history-table th, .history-table td { border-bottom: 1px solid var(--border-color); padding: 10px 12px; text-align: left; }
-        .history-table th { background-color: #F9FAFB; font-weight: 600; position: sticky; top: 0; }
-        .history-table tbody tr:hover { background-color: #EFF6FF; }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .form-card, .results-area { grid-column: span 6; }
-        }
-        @media (max-width: 992px) {
-            .form-card, .results-area { grid-column: span 12; }
-            .main-grid { display: flex; flex-direction: column; }
-        }
+        body { font-family: 'Inter', sans-serif, -apple-system, BlinkMacSystemFont; background-color: #f0f4f8; }
+        .form-input:focus { box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); border-color: #4299e1; }
+        .prose h3 { margin-top: 0; }
+        .prose p { margin-bottom: 0.5rem; }
     </style>
 </head>
-<body>
-    <header class="header">
-        <div class="header-title"><h1>智能投喂决策系统</h1></div>
-        <div class="header-actions">
-            <div class="stat-display">总预测次数: <strong>{{ stats.total_predictions }}</strong></div>
-            <a href="/download_log" class="btn">下载完整日志</a>
+<body class="text-gray-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600">智能投喂决策系统</h1>
+            <a href="/download_log" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">下载完整日志</a>
         </div>
     </header>
 
-    <main>
-        <div class="main-grid">
-            <div class="form-card card">
-                <form id="prediction-form">
-                    <fieldset>
-                        <legend>基础信息</legend>
-                        <div class="form-grid">
-                            <div class="form-group"><label for="month_day">月日</label><input type="text" id="month_day" name="month_day" required></div>
-                            <div class="form-group"><label for="system_id">系统ID</label><input type="text" id="system_id" name="system_id" required></div>
-                            <div class="form-group"><label for="age_in_days">养殖天数</label><input type="number" step="any" id="age_in_days" name="age_in_days" required></div>
-                            <div class="form-group"><label for="number_of_meals">日投喂餐数</label><input type="number" step="any" id="number_of_meals" name="number_of_meals" required></div>
+    <main class="container mx-auto p-4">
+        <div class="lg:flex lg:space-x-8">
+            <!-- Input Form Section -->
+            <div class="w-full lg:w-1/3">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">输入养殖参数</h2>
+                    <form id="prediction-form" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label for="month_day" class="block text-sm font-medium text-gray-700">月日</label><input type="text" id="month_day" name="month_day" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="system_id" class="block text-sm font-medium text-gray-700">系统ID</label><input type="text" id="system_id" name="system_id" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="age_in_days" class="block text-sm font-medium text-gray-700">养殖天数</label><input type="number" step="any" id="age_in_days" name="age_in_days" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="number_of_meals" class="block text-sm font-medium text-gray-700">日投喂餐数</label><input type="number" step="any" id="number_of_meals" name="number_of_meals" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="average_water_temp" class="block text-sm font-medium text-gray-700">平均水温 (°C)</label><input type="number" step="any" id="average_water_temp" name="average_water_temp" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="average_do" class="block text-sm font-medium text-gray-700">平均溶解氧 (mg/L)</label><input type="number" step="any" id="average_do" name="average_do" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="average_ph" class="block text-sm font-medium text-gray-700">平均pH值</label><input type="number" step="any" id="average_ph" name="average_ph" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="ammonia_nitrogen" class="block text-sm font-medium text-gray-700">氨氮浓度 (mg/L)</label><input type="number" step="any" id="ammonia_nitrogen" name="ammonia_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="nitrite_nitrogen" class="block text-sm font-medium text-gray-700">亚硝酸盐浓度 (mg/L)</label><input type="number" step="any" id="nitrite_nitrogen" name="nitrite_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="weight" class="block text-sm font-medium text-gray-700">单只虾平均体重 (g)</label><input type="number" step="any" id="weight" name="weight" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="avg_daily_weight_gain" class="block text-sm font-medium text-gray-700">日均增重 (g)</label><input type="number" step="any" id="avg_daily_weight_gain" name="avg_daily_weight_gain" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="shrimp_loading_cap" class="block text-sm font-medium text-gray-700">存塘量 (斤/m³)</label><input type="number" step="any" id="shrimp_loading_cap" name="shrimp_loading_cap" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="survival_rate" class="block text-sm font-medium text-gray-700">成活率预估</label><input type="number" step="any" id="survival_rate" name="survival_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="water_body_capacity" class="block text-sm font-medium text-gray-700">水体容量 (m³)</label><input type="number" step="any" id="water_body_capacity" name="water_body_capacity" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="water_change_amount" class="block text-sm font-medium text-gray-700">换水量 (m³)</label><input type="number" step="any" id="water_change_amount" name="water_change_amount" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="water_change_rate" class="block text-sm font-medium text-gray-700">换水率 (%)</label><input type="number" step="any" id="water_change_rate" name="water_change_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
                         </div>
-                    </fieldset>
-                     <fieldset>
-                        <legend>水质参数</legend>
-                        <div class="form-grid">
-                            <div class="form-group"><label for="average_water_temp">平均水温 (°C)</label><input type="number" step="any" id="average_water_temp" name="average_water_temp" required></div>
-                            <div class="form-group"><label for="average_do">平均溶解氧 (mg/L)</label><input type="number" step="any" id="average_do" name="average_do" required></div>
-                            <div class="form-group"><label for="average_ph">平均pH值</label><input type="number" step="any" id="average_ph" name="average_ph" required></div>
-                            <div class="form-group"><label for="ammonia_nitrogen">氨氮浓度 (mg/L)</label><input type="number" step="any" id="ammonia_nitrogen" name="ammonia_nitrogen" required></div>
-                            <div class="form-group"><label for="nitrite_nitrogen">亚硝酸盐浓度 (mg/L)</label><input type="number" step="any" id="nitrite_nitrogen" name="nitrite_nitrogen" required></div>
-                        </div>
-                     </fieldset>
-                     <fieldset>
-                        <legend>生长与容量参数</legend>
-                        <div class="form-grid">
-                           <div class="form-group"><label for="weight">单只虾平均体重 (g)</label><input type="number" step="any" id="weight" name="weight" required></div>
-                           <div class="form-group"><label for="avg_daily_weight_gain">日均增重 (g)</label><input type="number" step="any" id="avg_daily_weight_gain" name="avg_daily_weight_gain" required></div>
-                           <div class="form-group"><label for="shrimp_loading_cap">存塘量 (斤/m³)</label><input type="number" step="any" id="shrimp_loading_cap" name="shrimp_loading_cap" required></div>
-                           <div class="form-group"><label for="survival_rate">成活率预估</label><input type="number" step="any" id="survival_rate" name="survival_rate" required></div>
-                           <div class="form-group"><label for="water_body_capacity">水体容量 (m³)</label><input type="number" step="any" id="water_body_capacity" name="water_body_capacity" required></div>
-                           <div class="form-group"><label for="water_change_amount">换水量 (m³)</label><input type="number" step="any" id="water_change_amount" name="water_change_amount" required></div>
-                           <div class="form-group"><label for="water_change_rate">换水率 (%)</label><input type="number" step="any" id="water_change_rate" name="water_change_rate" required></div>
-                        </div>
-                     </fieldset>
-                     <fieldset>
-                        <legend>实际操作与备注</legend>
-                        <div class="form-grid">
-                            <div class="form-group" style="grid-column: 1 / -1;"><label for="actual_feeding_amount">实际投喂量 (kg) [可选]</label><input type="number" step="any" id="actual_feeding_amount" name="actual_feeding_amount"></div>
-                            <div class="form-group" style="grid-column: 1 / -1;"><label for="remarks">备注 [可选]</label><textarea id="remarks" name="remarks" rows="3"></textarea></div>
-                        </div>
-                     </fieldset>
-                    <button type="submit" class="btn" style="width: 100%; font-size: 1.1em; padding: 0.8em;">计算预测结果</button>
-                </form>
-            </div>
-            <div class="results-area card">
-                <div class="placeholder" id="results-placeholder">
-                    <h3 style="font-size: 1.2rem; margin: 0 0 0.5rem;">预测结果</h3>
-                    <p>在此处查看计算后的投喂建议</p>
-                </div>
-                <div class="spinner" id="loading-spinner"></div>
-                <div id="results-card">
-                    <h3 style="margin-top: 0;">最终投喂建议</h3>
-                    <div id="results-content"></div>
+                        <div><label for="actual_feeding_amount" class="block text-sm font-medium text-gray-700">实际投喂量 (kg) [可选]</label><input type="number" step="any" id="actual_feeding_amount" name="actual_feeding_amount" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                        <div><label for="remarks" class="block text-sm font-medium text-gray-700">备注 [可选]</label><textarea id="remarks" name="remarks" rows="3" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea></div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 mt-4">计算预测结果</button>
+                    </form>
                 </div>
             </div>
-            <div class="history-card card">
-                <h2>历史记录 (最新20条)</h2>
-                <div class="table-wrapper">
-                    {{ history_table|safe }}
+
+            <!-- Result Section -->
+            <div class="w-full lg:w-2/3 mt-8 lg:mt-0">
+                <div id="results-area" class="bg-white p-6 rounded-lg shadow-lg min-h-full">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">预测结果</h2>
+                    <div id="spinner" class="hidden text-center py-10">
+                        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                        <p class="mt-4 text-gray-600">正在调用模型计算，请稍候...</p>
+                    </div>
+                    <div id="placeholder" class="text-center py-20 text-gray-500">
+                        <p>提交参数后，将在此处显示最终投喂建议。</p>
+                    </div>
+                    <div id="results-content" class="prose max-w-none"></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="mt-8 bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-bold mb-4 border-b pb-2">历史记录</h2>
+            <div class="overflow-x-auto">
+                {{ history_table|safe }}
             </div>
         </div>
     </main>
@@ -149,14 +85,16 @@
             const formData = new FormData(event.target);
             const data = Object.fromEntries(formData.entries());
 
-            const resultsPlaceholder = document.getElementById('results-placeholder');
-            const resultsCard = document.getElementById('results-card');
+            const placeholder = document.getElementById('placeholder');
+            const spinner = document.getElementById('spinner');
             const resultsContent = document.getElementById('results-content');
-            const spinner = document.getElementById('loading-spinner');
+            const resultsArea = document.getElementById('results-area');
 
-            resultsPlaceholder.style.display = 'none';
-            resultsCard.style.display = 'none';
-            spinner.style.display = 'block';
+            // Scroll to results and show spinner
+            resultsArea.scrollIntoView({ behavior: 'smooth' });
+            placeholder.classList.add('hidden');
+            resultsContent.innerHTML = '';
+            spinner.classList.remove('hidden');
 
             try {
                 const response = await fetch('/predict', {
@@ -165,24 +103,28 @@
                     body: JSON.stringify(data)
                 });
 
-                spinner.style.display = 'none';
-
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.error || `HTTP 错误! 状态: ${response.status}`);
                 }
 
                 const result = await response.json();
-                resultsContent.innerText = result.recommendation;
-                resultsCard.style.display = 'block';
+                // Use marked.js to parse markdown-like text from LLM
+                resultsContent.innerHTML = marked.parse(result.recommendation);
+
+                // Reload the page to show the latest history after a short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
 
             } catch (error) {
-                spinner.style.display = 'none';
-                resultsContent.innerText = `请求出错: ${error.message}`;
-                resultsCard.style.display = 'block';
+                resultsContent.innerHTML = `<p class="text-red-500 font-bold">请求出错:</p><p class="text-red-700">${error.message}</p>`;
+            } finally {
+                spinner.classList.add('hidden');
             }
         });
     </script>
+
 </body>
 </html>
 
