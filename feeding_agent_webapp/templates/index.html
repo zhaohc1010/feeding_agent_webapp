@@ -49,7 +49,7 @@
                         </div>
                         <div><label for="actual_feeding_amount" class="block text-sm font-medium text-gray-700">实际投喂量 (kg) [可选]</label><input type="number" step="any" id="actual_feeding_amount" name="actual_feeding_amount" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
                         <div><label for="remarks" class="block text-sm font-medium text-gray-700">备注 [可选]</label><textarea id="remarks" name="remarks" rows="3" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea></div>
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 mt-4">计算预测结果</button>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 mt-4">进行预测</button>
                     </form>
                 </div>
             </div>
@@ -112,10 +112,10 @@
                 // Use marked.js to parse markdown-like text from LLM
                 resultsContent.innerHTML = marked.parse(result.recommendation);
 
-                // Reload the page to show the latest history after a short delay
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
+                // NOTE: The page reload logic has been removed.
+                // To update the history table, the user would need to manually refresh the page
+                // after seeing the prediction result. Or we could implement a more advanced
+                // front-end update logic in the future.
 
             } catch (error) {
                 resultsContent.innerHTML = `<p class="text-red-500 font-bold">请求出错:</p><p class="text-red-700">${error.message}</p>`;
