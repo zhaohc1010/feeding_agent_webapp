@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能投喂量预测智能体</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 2em; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #0056b3; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.2em; }
+        .form-group { display: flex; flex-direction: column; }
+        label { margin-bottom: 0.5em; font-weight: bold; font-size: 0.9em; color: #555; }
+        input, textarea { padding: 0.8em; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; transition: border-color 0.2s; }
+        input:focus, textarea:focus { border-color: #007bff; outline: none; }
+        .full-width { grid-column: 1 / -1; }
+        button { grid-column: 1 / -1; padding: 1em; font-size: 1.2em; color: white; background-color: #007bff; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #0056b3; }
+        #results { margin-top: 2em; padding: 1.5em; background: #e9ecef; border-radius: 4px; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace; line-height: 1.6; color: #333; }
+        .spinner { display: none; margin: 2em auto; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>智能投喂量预测智能体</h1>
+        <form id="prediction-form" class="form-grid">
+            <div class="form-group"><label for="month_day">月日 (例如: 704):</label><input type="text" id="month_day" name="month_day" required></div>
+            <div class="form-group"><label for="system_id">系统ID:</label><input type="text" id="system_id" name="system_id" required></div>
+            <div class="form-group"><label for="average_water_temp">平均水温 (°C):</label><input type="number" step="any" id="average_water_temp" name="average_water_temp" required></div>
+            <div class="form-group"><label for="average_do">平均溶解氧 (mg/L):</label><input type="number" step="any" id="average_do" name="average_do" required></div>
+            <div class="form-group"><label for="average_ph">平均pH值:</label><input type="number" step="any" id="average_ph" name="average_ph" required></div>
+            <div class="form-group"><label for="ammonia_nitrogen">氨氮浓度 (mg/L):</label><input type="number" step="any" id="ammonia_nitrogen" name="ammonia_nitrogen" required></div>
+            <div class="form-group"><label for="nitrite_nitrogen">亚硝酸盐浓度 (mg/L):</label><input type="number" step="any" id="nitrite_nitrogen" name="nitrite_nitrogen" required></div>
+            <div class="form-group"><label for="water_change_amount">换水量 (m³):</label><input type="number" step="any" id="water_change_amount" name="water_change_amount" required></div>
+            <div class="form-group"><label for="water_change_rate">换水率 (%):</label><input type="number" step="any" id="water_change_rate" name="water_change_rate" required></div>
+            <div class="form-group"><label for="age_in_days">养殖天数:</label><input type="number" step="any" id="age_in_days" name="age_in_days" required></div>
+            <div class="form-group"><label for="weight">单只虾平均体重 (g):</label><input type="number" step="any" id="weight" name="weight" required></div>
+            <div class="form-group"><label for="shrimp_loading_cap">存塘量 (斤/m³):</label><input type="number" step="any" id="shrimp_loading_cap" name="shrimp_loading_cap" required></div>
+            <div class="form-group"><label for="water_body_capacity">水体容量 (m³):</label><input type="number" step="any" id="water_body_capacity" name="water_body_capacity" required></div>
+            <div class="form-group"><label for="survival_rate">成活率预估 (例如: 0.99):</label><input type="number" step="any" id="survival_rate" name="survival_rate" required></div>
+            <div class="form-group"><label for="avg_daily_weight_gain">日均增重 (g):</label><input type="number" step="any" id="avg_daily_weight_gain" name="avg_daily_weight_gain" required></div>
+            <div class="form-group"><label for="number_of_meals">日投喂餐数:</label><input type="number" step="any" id="number_of_meals" name="number_of_meals" required></div>
+            <div class="form-group full-width"><label for="actual_feeding_amount">实际投喂量 (kg) [可选]:</label><input type="number" step="any" id="actual_feeding_amount" name="actual_feeding_amount"></div>
+            <div class="form-group full-width"><label for="remarks">备注 [可选]:</label><textarea id="remarks" name="remarks" rows="4"></textarea></div>
+            <button type="submit">获取投喂建议</button>
+        </form>
+        <div class="spinner" id="loading-spinner"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        document.getElementById('prediction-form').addEventListener('submit', async function(event) {
+            event.preventDefault(); // 阻止表单的默认提交行为
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries()); // 将表单数据转换为一个对象
+
+            const resultsDiv = document.getElementById('results');
+            const spinner = document.getElementById('loading-spinner');
+
+            resultsDiv.innerText = ''; // 清空之前的结果
+            spinner.style.display = 'block'; // 显示加载动画
+
+            try {
+                // 发送异步POST请求到后端的 /predict 接口
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data) // 将数据对象转换为JSON字符串
+                });
+
+                spinner.style.display = 'none'; // 隐藏加载动画
+
+                // 检查响应是否成功
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP 错误! 状态: ${response.status}`);
+                }
+
+                // 解析返回的JSON结果并显示
+                const result = await response.json();
+                resultsDiv.innerText = result.recommendation;
+
+            } catch (error) {
+                spinner.style.display = 'none'; // 隐藏加载动画
+                resultsDiv.innerText = `请求出错: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
