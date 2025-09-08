@@ -31,25 +31,17 @@ FULL_COLUMNS = [
 # --- 全局错误处理器 ---
 @app.errorhandler(Exception)
 def handle_exception(e):
-    """
-    捕获所有未处理的异常，确保总是返回JSON格式的错误。
-    """
-    # 如果是HTTP异常(如404 Not Found), 直接返回
     if isinstance(e, HTTPException):
         return jsonify(error=e.description), e.code
-
-    # 对于所有其他的Python异常, 记录下来并返回一个标准的500错误
-    # 在Render的日志中可以看到详细的print输出
     print(f"Unhandled Server Exception: {e}")
     import traceback
     traceback.print_exc()
-
     return jsonify(error=f"服务器发生意外错误: {str(e)}"), 500
 
 
 def get_history_table_html():
     """
-    辅助函数：读取日志文件并生成可编辑的HTML表格。
+    辅助函数：读取日志文件并根据指定列生成可编辑的HTML表格。
     """
     if not os.path.exists(LOG_FILE_PATH):
         return "<p class='text-center text-gray-500'>暂无历史记录</p>"
@@ -61,8 +53,9 @@ def get_history_table_html():
 
         df_reversed = df.iloc[::-1]
 
+        # 按照用户指定的字段显示
         display_columns = [
-            'Date', 'age_in_days', 'weight', 'average_water_temp', 'average_do',
+            'Date', 'age_in_days', 'weight', 'shrimp_loading_cap',
             'LGBM_Prediction_kg', 'Final_Predicted_Amount_kg',
             'Actual_Feeding_Amount_kg', 'Remarks'
         ]
@@ -72,7 +65,15 @@ def get_history_table_html():
         html = '<table class="min-w-full divide-y divide-gray-200">'
         html += '<thead class="bg-gray-50"><tr>'
         for col in existing_columns:
-            html += f'<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{col}</th>'
+            # 创建更友好的中文表头
+            header_map = {
+                'Date': '日期', 'age_in_days': '养殖天数', 'weight': '单虾重(g)',
+                'shrimp_loading_cap': '存塘量(斤/m³)', 'LGBM_Prediction_kg': 'LGBM预测(kg)',
+                'Final_Predicted_Amount_kg': '最终投喂量(kg)',
+                'Actual_Feeding_Amount_kg': '实际投喂量(kg)', 'Remarks': '备注'
+            }
+            display_header = header_map.get(col, col)
+            html += f'<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{display_header}</th>'
         html += '</tr></thead>'
         html += '<tbody class="bg-white divide-y divide-gray-200">'
 
@@ -160,10 +161,11 @@ def update_log():
     df = pd.read_excel(LOG_FILE_PATH)
 
     try:
+        # 尝试将值转换为正确的数值类型，如果列是数值类型的话
         if pd.api.types.is_numeric_dtype(df[column]) and value != '':
             value = float(value)
         elif pd.api.types.is_numeric_dtype(df[column]) and value == '':
-            value = None  # Or np.nan, pandas handles None well
+            value = None  # 使用 None 代表空值
         df.loc[index, column] = value
     except (ValueError, KeyError) as e:
         return jsonify({'error': f'Invalid value or column: {e}'}), 400
@@ -174,17 +176,35 @@ def update_log():
 
 @app.route('/add_row', methods=['POST'])
 def add_row():
-    if not os.path.exists(LOG_FILE_PATH):
-        # 如果文件不存在, 创建一个带有预定义列的空DataFrame
-        df = pd.DataFrame(columns=FULL_COLUMNS)
-    else:
-        df = pd.read_excel(LOG_FILE_PATH)
+    """
+    更健壮的新增行逻辑。
+    """
+    df = None
+    try:
+        if not os.path.exists(LOG_FILE_PATH):
+            # 如果文件不存在, 创建一个带有预定义列的空DataFrame
+            df = pd.DataFrame(columns=FULL_COLUMNS)
+        else:
+            df = pd.read_excel(LOG_FILE_PATH)
+            # 如果文件存在但为空（没有列），则重置DataFrame
+            if df.empty and len(df.columns) == 0:
+                df = pd.DataFrame(columns=FULL_COLUMNS)
 
-    new_row = pd.Series([None] * len(df.columns), index=df.columns)
-    df = pd.concat([df, new_row.to_frame().T], ignore_index=True)
+        # 创建一个包含None的新行（作为字典）
+        new_row_data = {col: None for col in df.columns}
+        # 将字典转换为单行DataFrame
+        new_row_df = pd.DataFrame([new_row_data])
 
-    df.to_excel(LOG_FILE_PATH, index=False)
-    return jsonify({'success': True, 'message': 'New row added successfully.'})
+        # 使用concat追加新行
+        df = pd.concat([df, new_row_df], ignore_index=True)
+
+        # 保存回Excel
+        df.to_excel(LOG_FILE_PATH, index=False)
+        return jsonify({'success': True, 'message': 'New row added successfully.'})
+
+    except Exception as e:
+        print(f"Adding new row failed: {e}")
+        return jsonify({'error': f'服务器内部错误: {str(e)}'}), 500
 
 
 @app.route('/download_log')
