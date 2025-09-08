@@ -18,7 +18,7 @@ app = Flask(__name__)
 
 def get_history_table_html():
     """
-    辅助函数：读取日志文件并生成HTML表格。
+    辅助函数：读取日志文件并生成可编辑的HTML表格。
     """
     if not os.path.exists(LOG_FILE_PATH):
         return "<p class='text-center text-gray-500'>暂无历史记录</p>"
@@ -28,25 +28,42 @@ def get_history_table_html():
         if df.empty:
             return "<p class='text-center text-gray-500'>暂无历史记录</p>"
 
-        all_records = df.iloc[::-1]
+        # 为了让最新的记录在最上面，我们反转DataFrame的行
+        df_reversed = df.iloc[::-1]
+
         display_columns = [
             'Date', 'age_in_days', 'weight', 'average_water_temp', 'average_do',
             'LGBM_Prediction_kg', 'Final_Predicted_Amount_kg',
             'Actual_Feeding_Amount_kg', 'Remarks'
         ]
-        existing_columns = [col for col in display_columns if col in all_records.columns]
 
-        history_table_html = all_records[existing_columns].to_html(
-            classes='min-w-full divide-y divide-gray-200', header=True,
-            index=False, na_rep='-', border=0
-        )
-        history_table_html = history_table_html.replace('<thead>', '<thead class="bg-gray-50">')
-        history_table_html = history_table_html.replace('<tbody>', '<tbody class="bg-white divide-y divide-gray-200">')
-        history_table_html = history_table_html.replace('<th>',
-                                                        '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">')
-        history_table_html = history_table_html.replace('<td>',
-                                                        '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">')
-        return history_table_html
+        # 确保我们只显示存在的列
+        existing_columns = [col for col in display_columns if col in df_reversed.columns]
+
+        # 手动构建HTML表格以添加可编辑属性
+        html = '<table class="min-w-full divide-y divide-gray-200">'
+        html += '<thead class="bg-gray-50"><tr>'
+        for col in existing_columns:
+            html += f'<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{col}</th>'
+        html += '</tr></thead>'
+        html += '<tbody class="bg-white divide-y divide-gray-200">'
+
+        for index, row in df_reversed.iterrows():
+            # 使用原始DataFrame的索引作为行的唯一标识
+            original_index = index
+            html += f'<tr data-original-index="{original_index}">'
+            for col in existing_columns:
+                cell_value = row[col]
+                # 对NaN值进行处理，显示为空字符串
+                if pd.isna(cell_value):
+                    cell_value = ''
+                html += (f'<td contenteditable="true" data-column="{col}" '
+                         f'class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none focus:bg-yellow-100">'
+                         f'{cell_value}</td>')
+            html += '</tr>'
+
+        html += '</tbody></table>'
+        return html
 
     except Exception as e:
         print(f"读取日志文件时出错: {e}")
@@ -86,9 +103,7 @@ def predict():
         final_recommendation = ""
 
         if lgbm_prediction is not None and formula_prediction is not None:
-            # 【重要修复】检查备注是否存在且去除空格后不为空
             if user_data.get('remarks') and user_data.get('remarks').strip():
-                # 如果有真实备注，启动智能决策模块
                 knowledge = read_knowledge_base()
                 historical_data = read_historical_data()
                 final_recommendation = get_final_decision_with_remarks(
@@ -96,7 +111,6 @@ def predict():
                     knowledge if knowledge else "知识库未找到或读取失败。", historical_data
                 )
             else:
-                # 没有备注，默认使用LightGBM的结果
                 final_recommendation = (
                     f"根据LightGBM模型的计算，建议的投喂量为 {lgbm_prediction:.4f} 公斤。\n\n"
                     f"由于未提供备注信息，系统默认采纳此数据驱动模型的预测结果。\n\n"
@@ -115,6 +129,43 @@ def predict():
 
     except Exception as e:
         print(f"服务器发生错误: {e}")
+        return jsonify({'error': f'服务器内部错误: {str(e)}'}), 500
+
+
+@app.route('/update_log', methods=['POST'])
+def update_log():
+    """
+    接收前端发来的修改，更新Excel文件。
+    """
+    try:
+        data = request.json
+        index = int(data['index'])
+        column = data['column']
+        value = data['value']
+
+        if not os.path.exists(LOG_FILE_PATH):
+            return jsonify({'error': 'Log file not found.'}), 404
+
+        df = pd.read_excel(LOG_FILE_PATH)
+
+        # 更新DataFrame中对应位置的值
+        # 我们需要尝试将值转换为正确的类型
+        try:
+            # 如果原始列是数字类型，尝试转换新值
+            if pd.api.types.is_numeric_dtype(df[column]):
+                value = float(value)
+            df.loc[index, column] = value
+        except (ValueError, KeyError) as e:
+            # 如果转换失败或列名错误，也视为客户端错误
+            return jsonify({'error': f'Invalid value or column: {e}'}), 400
+
+        # 保存回Excel文件
+        df.to_excel(LOG_FILE_PATH, index=False)
+
+        return jsonify({'success': True, 'message': f'Row {index}, Column {column} updated.'})
+
+    except Exception as e:
+        print(f"更新日志时发生错误: {e}")
         return jsonify({'error': f'服务器内部错误: {str(e)}'}), 500
 
 
