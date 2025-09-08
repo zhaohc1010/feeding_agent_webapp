@@ -53,12 +53,8 @@ def get_history_table_html():
 
         df_reversed = df.iloc[::-1]
 
-        # 按照用户指定的字段显示
-        display_columns = [
-            'Date', 'age_in_days', 'weight', 'shrimp_loading_cap',
-            'LGBM_Prediction_kg', 'Final_Predicted_Amount_kg',
-            'Actual_Feeding_Amount_kg', 'Remarks'
-        ]
+        # 按照用户指定的字段显示 (现在显示所有字段)
+        display_columns = FULL_COLUMNS
 
         existing_columns = [col for col in display_columns if col in df_reversed.columns]
 
@@ -67,9 +63,15 @@ def get_history_table_html():
         for col in existing_columns:
             # 创建更友好的中文表头
             header_map = {
-                'Date': '日期', 'age_in_days': '养殖天数', 'weight': '单虾重(g)',
-                'shrimp_loading_cap': '存塘量(斤/m³)', 'LGBM_Prediction_kg': 'LGBM预测(kg)',
-                'Final_Predicted_Amount_kg': '最终投喂量(kg)',
+                'Date': '日期', 'month_day': '月日', 'system_id': '系统ID',
+                'average_water_temp': '水温(°C)', 'average_do': '溶氧(mg/L)', 'average_ph': 'pH值',
+                'ammonia_nitrogen': '氨氮(mg/L)', 'nitrite_nitrogen': '亚硝酸盐(mg/L)',
+                'water_change_amount': '换水量(m³)', 'water_change_rate': '换水率(%)',
+                'age_in_days': '日龄', 'weight': '单虾重(g)',
+                'shrimp_loading_cap': '存塘量(斤/m³)', 'water_body_capacity': '水体容量(m³)',
+                'survival_rate': '成活率', 'avg_daily_weight_gain': '日均增重(g)',
+                'number_of_meals': '日投喂餐数', 'LGBM_Prediction_kg': 'LGBM预测(kg)',
+                'Formula_Prediction_kg': '公式预测(kg)', 'Final_Predicted_Amount_kg': '最终投喂量(kg)',
                 'Actual_Feeding_Amount_kg': '实际投喂量(kg)', 'Remarks': '备注'
             }
             display_header = header_map.get(col, col)
