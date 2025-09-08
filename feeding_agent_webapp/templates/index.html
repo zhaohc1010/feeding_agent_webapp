@@ -73,7 +73,7 @@
         <!-- History Section -->
         <div class="mt-8 bg-white p-6 rounded-lg shadow-lg">
             <h2 class="text-xl font-bold mb-4 border-b pb-2">历史记录</h2>
-            <div class="overflow-x-auto">
+            <div id="history-table-container" class="overflow-x-auto">
                 {{ history_table|safe }}
             </div>
         </div>
@@ -89,6 +89,7 @@
             const spinner = document.getElementById('spinner');
             const resultsContent = document.getElementById('results-content');
             const resultsArea = document.getElementById('results-area');
+            const historyContainer = document.getElementById('history-table-container');
 
             // Scroll to results and show spinner
             resultsArea.scrollIntoView({ behavior: 'smooth' });
@@ -109,13 +110,14 @@
                 }
 
                 const result = await response.json();
-                // Use marked.js to parse markdown-like text from LLM
+
+                // Update prediction result
                 resultsContent.innerHTML = marked.parse(result.recommendation);
 
-                // NOTE: The page reload logic has been removed.
-                // To update the history table, the user would need to manually refresh the page
-                // after seeing the prediction result. Or we could implement a more advanced
-                // front-end update logic in the future.
+                // If backend sent back an updated table, render it
+                if (result.history_table) {
+                    historyContainer.innerHTML = result.history_table;
+                }
 
             } catch (error) {
                 resultsContent.innerHTML = `<p class="text-red-500 font-bold">请求出错:</p><p class="text-red-700">${error.message}</p>`;
