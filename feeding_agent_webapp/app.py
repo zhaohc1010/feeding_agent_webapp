@@ -19,40 +19,23 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     """
-    渲染主页，加载仪表盘统计数据和历史记录。
+    渲染主页, 加载总预测次数和历史记录。
     """
-    dashboard_stats = {
-        'total_predictions': 0,
-        'avg_temp': 'N/A',
-        'avg_do': 'N/A',
-        'avg_final_kg': 'N/A'
-    }
+    stats = {'total_predictions': 0}
     history_table_html = "<h3>暂无历史记录</h3>"
 
     if os.path.exists(LOG_FILE_PATH):
         try:
             df = pd.read_excel(LOG_FILE_PATH)
             if not df.empty:
-                # 计算仪表盘统计数据
-                dashboard_stats['total_predictions'] = len(df)
-
-                # 确保列存在且为数字类型再计算
-                if 'average_water_temp' in df.columns and pd.to_numeric(df['average_water_temp'],
-                                                                        errors='coerce').notna().any():
-                    dashboard_stats['avg_temp'] = f"{df['average_water_temp'].astype(float).mean():.2f}°C"
-
-                if 'average_do' in df.columns and pd.to_numeric(df['average_do'], errors='coerce').notna().any():
-                    dashboard_stats['avg_do'] = f"{df['average_do'].astype(float).mean():.2f} mg/L"
-
-                if 'Final_Predicted_Amount_kg' in df.columns and pd.to_numeric(df['Final_Predicted_Amount_kg'],
-                                                                               errors='coerce').notna().any():
-                    dashboard_stats['avg_final_kg'] = f"{df['Final_Predicted_Amount_kg'].astype(float).mean():.2f} kg"
+                # 只计算总预测次数
+                stats['total_predictions'] = len(df)
 
                 # 准备历史记录表格
-                latest_records = df.tail(20)
+                latest_records = df.tail(20).iloc[::-1]  # 获取最新20条并倒序，让最新的在最上面
                 display_columns = [
                     'Date', 'age_in_days', 'weight', 'average_water_temp', 'average_do',
-                    'LGBM_Prediction_kg', 'Formula_Prediction_kg', 'Final_Predicted_Amount_kg',
+                    'LGBM_Prediction_kg', 'Final_Predicted_Amount_kg',
                     'Actual_Feeding_Amount_kg', 'Remarks'
                 ]
                 existing_columns = [col for col in display_columns if col in latest_records.columns]
@@ -65,8 +48,7 @@ def index():
             print(f"读取日志文件时出错: {e}")
             history_table_html = "<h3>读取历史记录失败</h3>"
 
-    # 将仪表盘数据和历史记录表格都传递给前端
-    return render_template('index.html', stats=dashboard_stats, history_table=history_table_html)
+    return render_template('index.html', stats=stats, history_table=history_table_html)
 
 
 @app.route('/predict', methods=['POST'])
@@ -128,7 +110,7 @@ def download_log():
     try:
         if not os.path.exists(LOG_FILE_PATH):
             return "日志文件尚未生成。", 404
-        return send_file(LOG_FILE_PATH, as_attachment=True)
+        return send_file(LOG_FILE_PATH, as_attachment=True, download_name='feeding_log.xlsx')
     except Exception as e:
         print(f"下载文件时出错: {e}")
         return "下载文件时发生服务器内部错误。", 500
