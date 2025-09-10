@@ -22,272 +22,359 @@
             background-color: #3b82f6;
             color: white;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            transform: translateY(-2px);
         }
-        .hidden { display: none; }
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border-left-color: #09f;
-            animation: spin 1s ease infinite;
+        .system-title {
+            background: linear-gradient(to right, #4f46e5, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Increase label font size */
+        label {
+            font-size: 0.95rem;
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <div class="container mx-auto p-4 md:p-8">
+<body class="text-gray-800">
 
-        <div class="text-center mb-10">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">智能投喂决策系统</h1>
-            <p class="text-xl md:text-2xl text-gray-500 mt-2">Intelligent Feeding Decision System</p>
-        </div>
-
-        <div class="max-w-7xl mx-auto">
-            <div class="flex flex-wrap justify-center items-center mb-6 bg-white p-3 rounded-xl shadow-md gap-4">
-                <div id="system-tabs" class="flex flex-wrap gap-3"></div>
-                <button id="add-system-btn" class="ml-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm">
-                    + 新增系统
-                </button>
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center space-x-3">
+                 <!-- Icon Changed Here: Color to blue, size to h-10 w-10 -->
+                 <svg class="h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">智能投喂决策系统</h1>
+                    <p class="text-sm text-gray-500">结合机器学习与人工智能，提供精准投喂决策</p>
+                </div>
             </div>
-            <div id="main-container" class="space-y-8"></div>
         </div>
-    </div>
+    </header>
+
+    <main class="container mx-auto p-4" id="main-container">
+        <!-- Navigation Tabs -->
+        <div class="mb-6 bg-white p-2 rounded-lg shadow-md flex space-x-2">
+            <button id="nav-predict" class="nav-btn flex-1 text-center py-2 px-4 rounded-md font-semibold">
+                智能预测
+            </button>
+            <button id="nav-history" class="nav-btn flex-1 text-center py-2 px-4 rounded-md font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200">
+                历史记录
+            </button>
+        </div>
+
+        <!-- Prediction View -->
+        <div id="prediction-view">
+            <div class="lg:flex lg:space-x-8">
+                <!-- Input Form - Balanced width -->
+                <div class="w-full lg:w-1/2">
+                    <div class="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 class="text-xl font-bold mb-6 border-b pb-3 flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M12 21a9 9 0 110-18 9 9 0 010 18z" /></svg>
+                            <span>输入养殖参数</span>
+                        </h2>
+                        <form id="prediction-form" class="space-y-5">
+                            <div><label for="system_id" class="block font-medium text-gray-700">系统ID</label><input type="text" id="system_id" name="system_id" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                                <div><label for="month_day" class="block font-medium text-gray-700">月日</label><input type="text" id="month_day" name="month_day" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="age_in_days" class="block font-medium text-gray-700">养殖天数</label><input type="number" step="any" id="age_in_days" name="age_in_days" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="number_of_meals" class="block font-medium text-gray-700">日投喂餐数</label><input type="number" step="any" id="number_of_meals" name="number_of_meals" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="average_water_temp" class="block font-medium text-gray-700">平均水温 (°C)</label><input type="number" step="any" id="average_water_temp" name="average_water_temp" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="average_do" class="block font-medium text-gray-700">平均溶解氧 (mg/L)</label><input type="number" step="any" id="average_do" name="average_do" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="average_ph" class="block font-medium text-gray-700">平均pH值</label><input type="number" step="any" id="average_ph" name="average_ph" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="ammonia_nitrogen" class="block font-medium text-gray-700">氨氮浓度 (mg/L)</label><input type="number" step="any" id="ammonia_nitrogen" name="ammonia_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="nitrite_nitrogen" class="block font-medium text-gray-700">亚硝酸盐浓度 (mg/L)</label><input type="number" step="any" id="nitrite_nitrogen" name="nitrite_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="weight" class="block font-medium text-gray-700">单只虾平均体重 (g)</label><input type="number" step="any" id="weight" name="weight" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="avg_daily_weight_gain" class="block font-medium text-gray-700">日均增重 (g)</label><input type="number" step="any" id="avg_daily_weight_gain" name="avg_daily_weight_gain" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="shrimp_loading_cap" class="block font-medium text-gray-700">存塘量 (斤/m³)</label><input type="number" step="any" id="shrimp_loading_cap" name="shrimp_loading_cap" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="survival_rate" class="block font-medium text-gray-700">成活率预估</label><input type="number" step="any" id="survival_rate" name="survival_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="water_body_capacity" class="block font-medium text-gray-700">水体容量 (m³)</label><input type="number" step="any" id="water_body_capacity" name="water_body_capacity" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="water_change_amount" class="block font-medium text-gray-700">换水量 (m³)</label><input type="number" step="any" id="water_change_amount" name="water_change_amount" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="water_change_rate" class="block font-medium text-gray-700">换水率 (%)</label><input type="number" step="any" id="water_change_rate" name="water_change_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                            </div>
+                            <div><label for="actual_feeding_amount" class="block font-medium text-gray-700">实际投喂量 (kg) [可选]</label><input type="number" step="any" id="actual_feeding_amount" name="actual_feeding_amount" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                            <div><label for="remarks" class="block font-medium text-gray-700">备注 [可选]</label><textarea id="remarks" name="remarks" rows="3" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></textarea></div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 mt-4 text-lg">进行预测</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Result Display -->
+                <div class="w-full lg:w-1/2 mt-8 lg:mt-0">
+                    <div id="results-area" class="bg-white p-6 rounded-lg shadow-lg min-h-full">
+                        <h2 class="text-xl font-bold mb-4 border-b pb-2">预测结果</h2>
+                        <div id="spinner" class="hidden text-center py-10">
+                            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                            <p class="mt-4 text-gray-600">正在调用模型计算，请稍候...</p>
+                        </div>
+                        <div id="placeholder" class="text-center py-20 text-gray-500">
+                            <p>提交参数后，将在此处显示最终投喂建议。</p>
+                        </div>
+                        <div id="results-content" class="prose max-w-none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History View -->
+        <div id="history-view" class="hidden">
+            {% if error_message %}
+                <div class="mt-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <strong class="font-bold">错误!</strong>
+                    <span class="block sm:inline">{{ error_message }}</span>
+                </div>
+            {% elif systems_data %}
+                {% for system_id, logs in systems_data.items() %}
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-lg system-card" data-system-id="{{ system_id }}">
+                    <div class="flex flex-wrap justify-between items-center border-b pb-2 mb-4">
+                        <h2 class="text-3xl font-bold system-title">{{ system_id }}</h2>
+                        <div class="flex items-center space-x-2 mt-2 sm:mt-0">
+                            <div class="save-status text-sm text-gray-500 transition-opacity duration-300 opacity-0"></div>
+                            <button class="add-row-btn bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">新增一行</button>
+                            <button class="save-changes-btn hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">保存更改</button>
+                            <a href="/download_log/{{ system_id }}" class="download-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">下载日志</a>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto history-table-container">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">月日</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">系统ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">水温(°C)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">溶氧(mg/L)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">pH值</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">氨氮(mg/L)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">亚硝酸盐(mg/L)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">换水量(m³)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">换水率(%)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">养殖天数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">单虾重(g)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">存塘量(斤/m³)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">水体容量(m³)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成活率</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日均增重(g)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日投喂餐数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LGBM预测(kg)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">公式预测(kg)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最终投喂量(kg)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">实际投喂量(kg)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备注</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for log in logs %}
+                                <tr data-doc-id="{{ log.id }}">
+                                    <td contenteditable="true" data-column="Date" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Date', '') }}</td>
+                                    <td contenteditable="true" data-column="month_day" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('month_day', '') }}</td>
+                                    <td contenteditable="true" data-column="system_id" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('system_id', '') }}</td>
+                                    <td contenteditable="true" data-column="average_water_temp" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('average_water_temp', '') }}</td>
+                                    <td contenteditable="true" data-column="average_do" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('average_do', '') }}</td>
+                                    <td contenteditable="true" data-column="average_ph" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('average_ph', '') }}</td>
+                                    <td contenteditable="true" data-column="ammonia_nitrogen" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('ammonia_nitrogen', '') }}</td>
+                                    <td contenteditable="true" data-column="nitrite_nitrogen" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('nitrite_nitrogen', '') }}</td>
+                                    <td contenteditable="true" data-column="water_change_amount" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('water_change_amount', '') }}</td>
+                                    <td contenteditable="true" data-column="water_change_rate" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('water_change_rate', '') }}</td>
+                                    <td contenteditable="true" data-column="age_in_days" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('age_in_days', '') }}</td>
+                                    <td contenteditable="true" data-column="weight" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('weight', '') }}</td>
+                                    <td contenteditable="true" data-column="shrimp_loading_cap" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('shrimp_loading_cap', '') }}</td>
+                                    <td contenteditable="true" data-column="water_body_capacity" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('water_body_capacity', '') }}</td>
+                                    <td contenteditable="true" data-column="survival_rate" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('survival_rate', '') }}</td>
+                                    <td contenteditable="true" data-column="avg_daily_weight_gain" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('avg_daily_weight_gain', '') }}</td>
+                                    <td contenteditable="true" data-column="number_of_meals" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('number_of_meals', '') }}</td>
+                                    <td contenteditable="true" data-column="LGBM_Prediction_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('LGBM_Prediction_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Formula_Prediction_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Formula_Prediction_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Final_Predicted_Amount_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Final_Predicted_Amount_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Actual_Feeding_Amount_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Actual_Feeding_Amount_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Remarks" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Remarks', '') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="mt-8 text-center py-10 text-gray-500 bg-white rounded-lg shadow-lg">
+                    <p>当前没有任何系统的历史记录。</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('prediction-form');
             const mainContainer = document.getElementById('main-container');
-            const systemTabs = document.getElementById('system-tabs');
-            const addSystemBtn = document.getElementById('add-system-btn');
-
+            const navPredict = document.getElementById('nav-predict');
+            const navHistory = document.getElementById('nav-history');
+            const predictionView = document.getElementById('prediction-view');
+            const historyView = document.getElementById('history-view');
             let changesToSave = {};
 
-            const paramConfig = [
-                { name: 'average_water_temp', label: '平均水温 (°C)', placeholder: '例如: 28.5' },
-                { name: 'average_do', label: '平均溶解氧 (mg/L)', placeholder: '例如: 6.0' },
-                { name: 'average_ph', label: '平均pH值', placeholder: '例如: 8.2' },
-                { name: 'ammonia_nitrogen', label: '氨氮浓度 (mg/L)', placeholder: '例如: 0.1' },
-                { name: 'nitrite_nitrogen', label: '亚硝酸盐浓度 (mg/L)', placeholder: '例如: 0.05' },
-                { name: 'age_in_days', label: '养殖天数 (天)', placeholder: '例如: 50' },
-                { name: 'weight', label: '平均体重 (g)', placeholder: '例如: 10.5' },
-                { name: 'shrimp_loading_cap', label: '放养量 (万尾)', placeholder: '例如: 30' },
-                { name: 'survival_rate', label: '存活率 (%)', placeholder: '例如: 85' },
-                { name: 'number_of_meals', label: '每日餐数', placeholder: '例如: 4' },
-                { name: 'remarks', label: '备注信息', placeholder: '特殊天气、水质变化等', type: 'text' },
-                { name: 'actual_feeding_amount', label: '实际投喂量 (kg)', placeholder: '选填, 用于记录', type: 'number' }
-            ];
+            // --- Robust State Management ---
+            const APP_STATE_KEY = 'feedingAppState';
 
-            const createInput = (name, label, placeholder, type = 'number', value = '', step = 'any') => `
-                <div class="flex flex-col">
-                    <label for="${name}" class="mb-1.5 text-base font-medium text-gray-700">${label}</label>
-                    <input type="${type}" id="${name}" name="${name}" placeholder="${placeholder}" step="${step}" value="${value}"
-                           class="form-input w-full px-4 py-2.5 text-base border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                </div>
-            `;
+            function saveState() {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                const resultsContent = document.getElementById('results-content');
 
-            const createSystemCard = (systemId, data) => {
-                const card = document.createElement('div');
-                card.className = 'system-card';
-                card.dataset.systemId = systemId;
-                card.innerHTML = `
-                    <div class="p-6 md:p-8 bg-white rounded-2xl shadow-lg">
-                        <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
-                            <h2 class="text-3xl font-bold text-gray-800">系统ID: ${systemId}</h2>
-                            <div class="flex items-center gap-3">
-                                <button class="save-changes-btn hidden bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-lg transition-transform transform hover:scale-105">保存修改</button>
-                                <button class="add-row-btn bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-5 rounded-lg transition-transform transform hover:scale-105">新增日志行</button>
-                                <a href="/download_log/${systemId}" class="download-btn bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-5 rounded-lg transition-transform transform hover:scale-105" download>下载日志</a>
-                            </div>
-                        </div>
+                const state = {
+                    formData: data,
+                    resultsHTML: resultsContent.innerHTML,
+                    isPlaceholderHidden: document.getElementById('placeholder').classList.contains('hidden'),
+                    activeView: historyView.classList.contains('hidden') ? 'predict' : 'history'
+                };
+                sessionStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
+            }
 
-                        <div class="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
-                             <div class="text-left mb-6">
-                                <h3 class="text-2xl font-semibold text-gray-700">输入养殖参数</h3>
-                                <p class="text-lg text-gray-500">Enter Aquaculture Parameters</p>
-                            </div>
-                            <form class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                                ${paramConfig.map(p => createInput(p.name, p.label, p.placeholder, p.type)).join('')}
-                            </form>
-                            <div class="mt-8 text-center">
-                                <button class="predict-btn bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-8 rounded-lg text-lg shadow-md transition-transform transform hover:scale-105">
-                                    获取智能投喂建议
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="result-container mt-6 prose max-w-none prose-lg"></div>
-
-                        <div class="log-container mt-8">
-                            <h3 class="text-2xl font-bold text-gray-800 mb-4">历史日志 / Historical Logs</h3>
-                            <div class="overflow-x-auto bg-white rounded-lg shadow-md border border-gray-200">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-100"></thead>
-                                    <tbody class="bg-white divide-y divide-gray-200"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                card.querySelector('.predict-btn').addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    const form = e.target.closest('div.mb-8').querySelector('form');
-                    const inputs = form.querySelectorAll('input');
-                    const resultContainer = card.querySelector('.result-container');
-                    const requestData = { system_id: systemId };
-                    inputs.forEach(input => {
-                        if (input.value !== '') {
-                             requestData[input.name] = input.type === 'number' ? parseFloat(input.value) : input.value;
-                        }
-                    });
-
-                    resultContainer.innerHTML = '<div class="flex justify-center items-center p-6"><div class="spinner"></div><p class="ml-4 text-gray-600">正在分析，请稍候...</p></div>';
-
-                    try {
-                        const response = await fetch('/predict', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(requestData)
-                        });
-                        const result = await response.json();
-                        if (response.ok) {
-                            resultContainer.innerHTML = marked.parse(result.recommendation);
-                        } else {
-                            throw new Error(result.error || '预测失败');
-                        }
-                    } catch (error) {
-                        resultContainer.innerHTML = `<p class="text-red-500">发生错误: ${error.message}</p>`;
-                    }
-                });
-
-                card.querySelector('.save-changes-btn').addEventListener('click', async () => saveChanges(systemId));
-                card.querySelector('.add-row-btn').addEventListener('click', () => addRow(systemId));
-
-                return card;
-            };
-
-            const loadSystemData = async (systemId) => {
-                const card = mainContainer.querySelector(`.system-card[data-system-id='${systemId}']`);
-                if (!card) return;
-
-                const tableHead = card.querySelector('thead');
-                const tableBody = card.querySelector('tbody');
-                tableHead.innerHTML = '<tr><th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">加载中...</th></tr>';
-                tableBody.innerHTML = '';
-
-                try {
-                    const response = await fetch(`/get_log/${systemId}`);
-                    const data = await response.json();
-
-                    if (response.ok && data.columns && data.records) {
-                        tableHead.innerHTML = `<tr>${data.columns.map(col => `<th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">${col}</th>`).join('')}</tr>`;
-                        tableBody.innerHTML = data.records.map(row => `
-                            <tr data-doc-id="${row.doc_id}">
-                                ${data.columns.map(col => `
-                                    <td class="px-4 py-3 whitespace-nowrap text-gray-700 text-sm" contenteditable="true" data-column="${col}">${row[col] !== null && row[col] !== undefined ? row[col] : ''}</td>
-                                `).join('')}
-                            </tr>
-                        `).join('');
-
-                        const latestRecord = data.records[0] || {};
-                        const form = card.querySelector('form');
-                        paramConfig.forEach(p => {
-                           if(latestRecord[p.name] !== undefined && p.name !== 'remarks' && p.name !== 'actual_feeding_amount') {
-                               const input = form.querySelector(`[name="${p.name}"]`);
-                               if(input) input.value = latestRecord[p.name];
-                           }
-                        });
-
-                    } else {
-                        tableHead.innerHTML = '<tr><th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">无数据</th></tr>';
-                        tableBody.innerHTML = `<tr><td class="px-4 py-4 text-gray-500" colspan="100%">${data.error || '未能加载日志记录。'}</td></tr>`;
-                    }
-                } catch (error) {
-                    tableHead.innerHTML = '<tr><th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">错误</th></tr>';
-                    tableBody.innerHTML = `<tr><td class="px-4 py-4 text-red-500" colspan="100%">加载日志失败: ${error.message}</td></tr>`;
+            function restoreState() {
+                const savedStateJSON = sessionStorage.getItem(APP_STATE_KEY);
+                if (!savedStateJSON) {
+                    showPredictionView(); // Default view
+                    return;
                 }
-            };
+                const state = JSON.parse(savedStateJSON);
 
-            const saveChanges = async (systemId) => {
-                const changes = changesToSave[systemId];
-                if (!changes) return;
+                if (state.formData) {
+                    for (const key in state.formData) {
+                        if (form.elements[key]) {
+                            form.elements[key].value = state.formData[key];
+                        }
+                    }
+                }
+                if (state.resultsHTML && state.isPlaceholderHidden) {
+                    document.getElementById('placeholder').classList.add('hidden');
+                    document.getElementById('results-content').innerHTML = state.resultsHTML;
+                }
+                if (state.activeView === 'history') {
+                    showHistoryView();
+                } else {
+                    showPredictionView();
+                }
+            }
+
+            restoreState();
+
+            // --- View Toggling ---
+            function showPredictionView() {
+                predictionView.classList.remove('hidden');
+                historyView.classList.add('hidden');
+                navPredict.classList.add('active');
+                navPredict.classList.remove('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+                navHistory.classList.remove('active');
+                navHistory.classList.add('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+            }
+
+            function showHistoryView() {
+                predictionView.classList.add('hidden');
+                historyView.classList.remove('hidden');
+                navHistory.classList.add('active');
+                navHistory.classList.remove('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+                navPredict.classList.remove('active');
+                navPredict.classList.add('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+            }
+
+            navPredict.addEventListener('click', () => {
+                saveState();
+                showPredictionView();
+            });
+            navHistory.addEventListener('click', () => {
+                saveState();
+                showHistoryView();
+            });
+
+            // --- Helper for Reloading with State ---
+            function reloadWithState() {
+                saveState();
+                window.location.reload();
+            }
+
+
+            // --- Prediction Form Submission ---
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+
+                const spinner = document.getElementById('spinner');
+                const placeholder = document.getElementById('placeholder');
+                const resultsContent = document.getElementById('results-content');
+                const resultsArea = document.getElementById('results-area');
+
+                resultsArea.scrollIntoView({ behavior: 'smooth' });
+                placeholder.classList.add('hidden');
+                resultsContent.innerHTML = '';
+                spinner.classList.remove('hidden');
 
                 try {
-                    const response = await fetch('/update_log', {
+                    const response = await fetch('/predict', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ system_id: systemId, changes: changes })
+                        body: JSON.stringify(data)
                     });
                     const result = await response.json();
                     if (!response.ok) {
-                        throw new Error(result.error || 'Failed to save changes');
+                        throw new Error(result.error || `HTTP 错误! 状态: ${response.status}`);
                     }
-                    delete changesToSave[systemId];
-                    mainContainer.querySelector(`.system-card[data-system-id='${systemId}'] .save-changes-btn`).classList.add('hidden');
-                     alert('修改已保存！');
+
+                    resultsContent.innerHTML = marked.parse(result.recommendation);
+
+                    setTimeout(() => {
+                        reloadWithState();
+                    }, 1500);
+
                 } catch (error) {
-                    alert(`保存失败: ${error.message}`);
-                }
-            };
-
-            const switchTab = (systemId) => {
-                document.querySelectorAll('.system-card').forEach(card => card.classList.add('hidden'));
-                const activeCard = document.querySelector(`.system-card[data-system-id='${systemId}']`);
-                if (activeCard) activeCard.classList.remove('hidden');
-
-                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-                const activeBtn = document.querySelector(`.nav-btn[data-system-id='${systemId}']`);
-                if (activeBtn) activeBtn.classList.add('active');
-
-                localStorage.setItem('activeSystemId', systemId);
-            };
-
-            const reloadWithState = async () => {
-                const activeSystemId = localStorage.getItem('activeSystemId');
-                const response = await fetch('/get_systems');
-                const systems = await response.json();
-
-                mainContainer.innerHTML = '';
-                systemTabs.innerHTML = '';
-
-                if (systems.length > 0) {
-                    systems.forEach(systemId => {
-                        const card = createSystemCard(systemId);
-                        mainContainer.appendChild(card);
-                        loadSystemData(systemId);
-
-                        const tab = document.createElement('button');
-                        tab.textContent = `系统 ${systemId}`;
-                        tab.className = 'nav-btn px-4 py-2 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-blue-500 hover:text-white';
-                        tab.dataset.systemId = systemId;
-                        tab.addEventListener('click', () => switchTab(systemId));
-                        systemTabs.appendChild(tab);
-                    });
-
-                    const idToActivate = activeSystemId && systems.includes(activeSystemId) ? activeSystemId : systems[0];
-                    switchTab(idToActivate);
-                } else {
-                     mainContainer.innerHTML = '<p class="text-center text-gray-500">暂无系统，请点击“新增系统”开始。</p>';
-                }
-            };
-
-            reloadWithState();
-
-            addSystemBtn.addEventListener('click', () => {
-                const systemId = prompt('请输入新的系统ID:');
-                if (systemId && systemId.trim()) {
-                    localStorage.setItem('activeSystemId', systemId.trim());
-                    reloadWithState();
+                    resultsContent.innerHTML = `<p class="text-red-500 font-bold">请求出错:</p><p class="text-red-700">${error.message}</p>`;
+                } finally {
+                    spinner.classList.add('hidden');
                 }
             });
 
-            const addRow = async (systemId) => {
-                 const confirmed = confirm(`确定要为系统 ${systemId} 新增一个空的日志行吗？`);
-                if (confirmed) {
+            // --- History Section Event Delegation ---
+            mainContainer.addEventListener('click', async (event) => {
+                const target = event.target.closest('button');
+                if (!target) return;
+
+                const card = target.closest('.system-card');
+                if (!card) return;
+
+                const systemId = card.dataset.systemId;
+                const saveStatus = card.querySelector('.save-status');
+
+                if (target.classList.contains('save-changes-btn')) {
+                    const changesForSystem = changesToSave[systemId];
+                    if (!changesForSystem) return;
+
+                    const payload = {
+                        system_id: systemId,
+                        changes: changesForSystem
+                    };
+
+                    try {
+                        saveStatus.textContent = '正在保存...';
+                        saveStatus.classList.remove('text-red-500', 'text-green-500');
+                        saveStatus.classList.add('opacity-100');
+
+                        const response = await fetch('/update_log_batch', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.error);
+
+                        reloadWithState();
+
+                    } catch (error) {
+                        saveStatus.textContent = `保存失败: ${error.message}`;
+                        saveStatus.classList.add('text-red-500');
+                        setTimeout(() => saveStatus.classList.remove('opacity-100'), 4000);
+                    }
+                }
+
+                if (target.classList.contains('add-row-btn')) {
                     try {
                         const response = await fetch('/add_row', {
                             method: 'POST',
@@ -303,7 +390,7 @@
                         alert(`新增失败: ${error.message}`);
                     }
                 }
-            };
+            });
 
              mainContainer.addEventListener('input', (event) => {
                 const cell = event.target;
@@ -326,3 +413,4 @@
     </script>
 </body>
 </html>
+
