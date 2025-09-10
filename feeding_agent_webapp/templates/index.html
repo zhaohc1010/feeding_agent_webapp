@@ -226,8 +226,8 @@
                 if (state.resultsHTML) {
                     if(state.isPlaceholderHidden) {
                        document.getElementById('placeholder').classList.add('hidden');
+                       document.getElementById('results-content').innerHTML = state.resultsHTML;
                     }
-                    document.getElementById('results-content').innerHTML = state.resultsHTML;
                 }
                 if (state.activeView === 'history') {
                     showHistoryView();
@@ -257,8 +257,21 @@
                 navPredict.classList.add('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
             }
 
-            navPredict.addEventListener('click', showPredictionView);
-            navHistory.addEventListener('click', showHistoryView);
+            navPredict.addEventListener('click', () => {
+                showPredictionView();
+                saveState();
+            });
+            navHistory.addEventListener('click', () => {
+                showHistoryView();
+                saveState();
+            });
+
+            // --- Helper for Reloading with State ---
+            function reloadWithState() {
+                saveState();
+                window.location.reload();
+            }
+
 
             // --- Prediction Form Submission ---
             form.addEventListener('submit', async function(event) {
@@ -290,8 +303,7 @@
                     resultsContent.innerHTML = marked.parse(result.recommendation);
 
                     setTimeout(() => {
-                        saveState();
-                        window.location.reload();
+                        reloadWithState();
                     }, 1500);
 
                 } catch (error) {
@@ -312,7 +324,6 @@
                 const systemId = card.dataset.systemId;
                 const saveStatus = card.querySelector('.save-status');
 
-                // --- Handle Save Changes ---
                 if (target.classList.contains('save-changes-btn')) {
                     const changesForSystem = changesToSave[systemId];
                     if (!changesForSystem) return;
@@ -335,8 +346,7 @@
                         const data = await response.json();
                         if (!response.ok) throw new Error(data.error);
 
-                        saveState();
-                        window.location.reload();
+                        reloadWithState();
 
                     } catch (error) {
                         saveStatus.textContent = `保存失败: ${error.message}`;
@@ -345,10 +355,8 @@
                     }
                 }
 
-                // --- Handle Add Row ---
                 if (target.classList.contains('add-row-btn')) {
                     try {
-                        saveState();
                         const response = await fetch('/add_row', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -358,7 +366,7 @@
                             const err = await response.json();
                             throw new Error(err.error || 'Failed to add row');
                         }
-                        window.location.reload();
+                        reloadWithState();
                     } catch (error) {
                         alert(`新增失败: ${error.message}`);
                     }
