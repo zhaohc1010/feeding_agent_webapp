@@ -65,14 +65,18 @@ def handle_exception(e):
 
 # --- Helper Functions for Firestore ---
 
-def get_logs_collection(system_id):
+def get_system_and_logs_refs(system_id):
+    """ Helper to get references and ensure parent document exists. """
     if not db or not system_id or not system_id.strip():
-        return None
-    return db.collection('systems').document(system_id.strip()).collection('logs')
+        return None, None
+    system_id_stripped = system_id.strip()
+    system_doc_ref = db.collection('systems').document(system_id_stripped)
+    logs_collection_ref = system_doc_ref.collection('logs')
+    return system_doc_ref, logs_collection_ref
 
 
 def read_historical_data_from_firestore(system_id):
-    logs_collection = get_logs_collection(system_id)
+    _, logs_collection = get_system_and_logs_refs(system_id)
     if not logs_collection:
         return "数据库未连接或系统ID无效。"
     try:
@@ -90,7 +94,7 @@ def read_historical_data_from_firestore(system_id):
 
 
 def log_data_to_firestore(system_id, user_data, lgbm_pred, formula_pred, final_pred_text):
-    logs_collection = get_logs_collection(system_id)
+    system_doc_ref, logs_collection = get_system_and_logs_refs(system_id)
     if not logs_collection:
         print("Firestore not initialized or invalid system_id, skipping log.")
         return
@@ -107,6 +111,8 @@ def log_data_to_firestore(system_id, user_data, lgbm_pred, formula_pred, final_p
             'timestamp': firestore.SERVER_TIMESTAMP
         })
 
+        system_doc_ref.set({'last_updated': firestore.SERVER_TIMESTAMP, 'system_id': system_id.strip()}, merge=True)
+
         logs_collection.add(new_log_data)
         print(f"Data successfully logged to Firestore for system {system_id}.")
     except Exception as e:
@@ -117,7 +123,6 @@ def log_data_to_firestore(system_id, user_data, lgbm_pred, formula_pred, final_p
 
 @app.route('/')
 def index():
-    """ Renders the main page with prediction form and all history logs. """
     if not db:
         return render_template('index.html', systems_data={}, error_message="数据库未连接，请检查服务器配置。")
 
@@ -126,7 +131,7 @@ def index():
         system_docs = db.collection('systems').stream()
         for system in system_docs:
             system_id = system.id
-            logs_collection = get_logs_collection(system_id)
+            _, logs_collection = get_system_and_logs_refs(system_id)
             docs = logs_collection.order_by('timestamp', direction=firestore.Query.DESCENDING).stream()
             records = [{'id': doc.id, **doc.to_dict()} for doc in docs]
             if records:
@@ -146,11 +151,11 @@ def predict():
         return jsonify({'error': '系统ID (System ID) 不能为空。'}), 400
 
     for key, value in user_data.items():
-        if key not in ['system_id', 'month_day', 'remarks', 'actual_feeding_amount'] and not value:
+        if key not in ['system_id', 'month_day', 'remarks', 'actual_feeding_amount'] and (value is None or value == ''):
             return jsonify({'error': f'参数 {key} 不能为空。'}), 400
         if key not in ['system_id', 'month_day', 'remarks']:
             try:
-                user_data[key] = float(value) if value else None
+                user_data[key] = float(value) if value is not None and value != '' else None
             except (ValueError, TypeError):
                 pass
 
@@ -188,7 +193,7 @@ def update_log_batch():
     system_id = data.get('system_id')
     changes = data.get('changes', {})
 
-    logs_collection = get_logs_collection(system_id)
+    _, logs_collection = get_system_and_logs_refs(system_id)
     if not logs_collection:
         return jsonify({'error': '数据库未连接或系统ID无效'}), 500
 
@@ -215,11 +220,13 @@ def update_log_batch():
 @app.route('/add_row', methods=['POST'])
 def add_row():
     system_id = request.json.get('system_id')
-    logs_collection = get_logs_collection(system_id)
+    system_doc_ref, logs_collection = get_system_and_logs_refs(system_id)
     if not logs_collection:
         return jsonify({'error': '数据库未连接或系统ID无效'}), 500
 
     try:
+        system_doc_ref.set({'last_updated': firestore.SERVER_TIMESTAMP, 'system_id': system_id.strip()}, merge=True)
+
         new_row_data = {col: None for col in FULL_COLUMNS}
         new_row_data['timestamp'] = firestore.SERVER_TIMESTAMP
         new_row_data['system_id'] = system_id
@@ -231,7 +238,7 @@ def add_row():
 
 @app.route('/download_log/<system_id>')
 def download_log(system_id):
-    logs_collection = get_logs_collection(system_id)
+    _, logs_collection = get_system_and_logs_refs(system_id)
     if not logs_collection:
         return "数据库未连接或系统ID无效", 400
     try:
