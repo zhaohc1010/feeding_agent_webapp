@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale-1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智能投喂决策系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -47,38 +47,38 @@
         <!-- Prediction View -->
         <div id="prediction-view">
             <div class="lg:flex lg:space-x-8">
-                <!-- Input Form -->
-                <div class="w-full lg:w-1/3">
+                <!-- Input Form - Increased width and font size -->
+                <div class="w-full lg:w-2/5">
                     <div class="bg-white p-6 rounded-lg shadow-lg">
                         <h2 class="text-xl font-bold mb-4 border-b pb-2">输入养殖参数</h2>
                         <form id="prediction-form" class="space-y-4">
-                            <div><label for="system_id" class="block text-sm font-medium text-gray-700">系统ID</label><input type="text" id="system_id" name="system_id" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="system_id" class="block text-sm font-medium text-gray-700">系统ID</label><input type="text" id="system_id" name="system_id" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label for="month_day" class="block text-sm font-medium text-gray-700">月日</label><input type="text" id="month_day" name="month_day" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="age_in_days" class="block text-sm font-medium text-gray-700">养殖天数</label><input type="number" step="any" id="age_in_days" name="age_in_days" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="number_of_meals" class="block text-sm font-medium text-gray-700">日投喂餐数</label><input type="number" step="any" id="number_of_meals" name="number_of_meals" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="average_water_temp" class="block text-sm font-medium text-gray-700">平均水温 (°C)</label><input type="number" step="any" id="average_water_temp" name="average_water_temp" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="average_do" class="block text-sm font-medium text-gray-700">平均溶解氧 (mg/L)</label><input type="number" step="any" id="average_do" name="average_do" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="average_ph" class="block text-sm font-medium text-gray-700">平均pH值</label><input type="number" step="any" id="average_ph" name="average_ph" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="ammonia_nitrogen" class="block text-sm font-medium text-gray-700">氨氮浓度 (mg/L)</label><input type="number" step="any" id="ammonia_nitrogen" name="ammonia_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="nitrite_nitrogen" class="block text-sm font-medium text-gray-700">亚硝酸盐浓度 (mg/L)</label><input type="number" step="any" id="nitrite_nitrogen" name="nitrite_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="weight" class="block text-sm font-medium text-gray-700">单只虾平均体重 (g)</label><input type="number" step="any" id="weight" name="weight" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="avg_daily_weight_gain" class="block text-sm font-medium text-gray-700">日均增重 (g)</label><input type="number" step="any" id="avg_daily_weight_gain" name="avg_daily_weight_gain" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="shrimp_loading_cap" class="block text-sm font-medium text-gray-700">存塘量 (斤/m³)</label><input type="number" step="any" id="shrimp_loading_cap" name="shrimp_loading_cap" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="survival_rate" class="block text-sm font-medium text-gray-700">成活率预估</label><input type="number" step="any" id="survival_rate" name="survival_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="water_body_capacity" class="block text-sm font-medium text-gray-700">水体容量 (m³)</label><input type="number" step="any" id="water_body_capacity" name="water_body_capacity" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="water_change_amount" class="block text-sm font-medium text-gray-700">换水量 (m³)</label><input type="number" step="any" id="water_change_amount" name="water_change_amount" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                                <div><label for="water_change_rate" class="block text-sm font-medium text-gray-700">换水率 (%)</label><input type="number" step="any" id="water_change_rate" name="water_change_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                                <div><label for="month_day" class="block text-sm font-medium text-gray-700">月日</label><input type="text" id="month_day" name="month_day" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="age_in_days" class="block text-sm font-medium text-gray-700">养殖天数</label><input type="number" step="any" id="age_in_days" name="age_in_days" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="number_of_meals" class="block text-sm font-medium text-gray-700">日投喂餐数</label><input type="number" step="any" id="number_of_meals" name="number_of_meals" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="average_water_temp" class="block text-sm font-medium text-gray-700">平均水温 (°C)</label><input type="number" step="any" id="average_water_temp" name="average_water_temp" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="average_do" class="block text-sm font-medium text-gray-700">平均溶解氧 (mg/L)</label><input type="number" step="any" id="average_do" name="average_do" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="average_ph" class="block text-sm font-medium text-gray-700">平均pH值</label><input type="number" step="any" id="average_ph" name="average_ph" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="ammonia_nitrogen" class="block text-sm font-medium text-gray-700">氨氮浓度 (mg/L)</label><input type="number" step="any" id="ammonia_nitrogen" name="ammonia_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="nitrite_nitrogen" class="block text-sm font-medium text-gray-700">亚硝酸盐浓度 (mg/L)</label><input type="number" step="any" id="nitrite_nitrogen" name="nitrite_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="weight" class="block text-sm font-medium text-gray-700">单只虾平均体重 (g)</label><input type="number" step="any" id="weight" name="weight" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="avg_daily_weight_gain" class="block text-sm font-medium text-gray-700">日均增重 (g)</label><input type="number" step="any" id="avg_daily_weight_gain" name="avg_daily_weight_gain" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="shrimp_loading_cap" class="block text-sm font-medium text-gray-700">存塘量 (斤/m³)</label><input type="number" step="any" id="shrimp_loading_cap" name="shrimp_loading_cap" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="survival_rate" class="block text-sm font-medium text-gray-700">成活率预估</label><input type="number" step="any" id="survival_rate" name="survival_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="water_body_capacity" class="block text-sm font-medium text-gray-700">水体容量 (m³)</label><input type="number" step="any" id="water_body_capacity" name="water_body_capacity" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="water_change_amount" class="block text-sm font-medium text-gray-700">换水量 (m³)</label><input type="number" step="any" id="water_change_amount" name="water_change_amount" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                                <div><label for="water_change_rate" class="block text-sm font-medium text-gray-700">换水率 (%)</label><input type="number" step="any" id="water_change_rate" name="water_change_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
                             </div>
-                            <div><label for="actual_feeding_amount" class="block text-sm font-medium text-gray-700">实际投喂量 (kg) [可选]</label><input type="number" step="any" id="actual_feeding_amount" name="actual_feeding_amount" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                            <div><label for="remarks" class="block text-sm font-medium text-gray-700">备注 [可选]</label><textarea id="remarks" name="remarks" rows="3" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea></div>
+                            <div><label for="actual_feeding_amount" class="block text-sm font-medium text-gray-700">实际投喂量 (kg) [可选]</label><input type="number" step="any" id="actual_feeding_amount" name="actual_feeding_amount" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></div>
+                            <div><label for="remarks" class="block text-sm font-medium text-gray-700">备注 [可选]</label><textarea id="remarks" name="remarks" rows="3" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base"></textarea></div>
                             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 mt-4">进行预测</button>
                         </form>
                     </div>
                 </div>
 
                 <!-- Result Display -->
-                <div class="w-full lg:w-2/3 mt-8 lg:mt-0">
+                <div class="w-full lg:w-3/5 mt-8 lg:mt-0">
                     <div id="results-area" class="bg-white p-6 rounded-lg shadow-lg min-h-full">
                         <h2 class="text-xl font-bold mb-4 border-b pb-2">预测结果</h2>
                         <div id="spinner" class="hidden text-center py-10">
@@ -191,36 +191,45 @@
             const historyView = document.getElementById('history-view');
             let changesToSave = {};
 
-            // --- State Management ---
+            // --- Robust State Management ---
+            const APP_STATE_KEY = 'feedingAppState';
+
             function saveState() {
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData.entries());
-                sessionStorage.setItem('formData', JSON.stringify(data));
-
                 const resultsContent = document.getElementById('results-content');
-                if (resultsContent.innerHTML && !document.getElementById('placeholder').classList.contains('hidden')) {
-                    sessionStorage.setItem('resultsHTML', resultsContent.innerHTML);
-                }
-                sessionStorage.setItem('activeView', historyView.classList.contains('hidden') ? 'predict' : 'history');
+
+                const state = {
+                    formData: data,
+                    resultsHTML: resultsContent.innerHTML,
+                    isPlaceholderHidden: document.getElementById('placeholder').classList.contains('hidden'),
+                    activeView: historyView.classList.contains('hidden') ? 'predict' : 'history'
+                };
+                sessionStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
             }
 
             function restoreState() {
-                const savedForm = sessionStorage.getItem('formData');
-                if (savedForm) {
-                    const data = JSON.parse(savedForm);
-                    for (const key in data) {
+                const savedStateJSON = sessionStorage.getItem(APP_STATE_KEY);
+                if (!savedStateJSON) {
+                    showPredictionView(); // Default view
+                    return;
+                }
+                const state = JSON.parse(savedStateJSON);
+
+                if (state.formData) {
+                    for (const key in state.formData) {
                         if (form.elements[key]) {
-                            form.elements[key].value = data[key];
+                            form.elements[key].value = state.formData[key];
                         }
                     }
                 }
-                const savedResult = sessionStorage.getItem('resultsHTML');
-                if (savedResult) {
-                    document.getElementById('placeholder').classList.add('hidden');
-                    document.getElementById('results-content').innerHTML = savedResult;
+                if (state.resultsHTML) {
+                    if(state.isPlaceholderHidden) {
+                       document.getElementById('placeholder').classList.add('hidden');
+                    }
+                    document.getElementById('results-content').innerHTML = state.resultsHTML;
                 }
-                const activeView = sessionStorage.getItem('activeView');
-                if (activeView === 'history') {
+                if (state.activeView === 'history') {
                     showHistoryView();
                 } else {
                     showPredictionView();
@@ -293,24 +302,6 @@
             });
 
             // --- History Section Event Delegation ---
-            mainContainer.addEventListener('input', (event) => {
-                const cell = event.target;
-                if (cell.tagName === 'TD' && cell.isContentEditable) {
-                    const card = cell.closest('.system-card');
-                    const saveBtn = card.querySelector('.save-changes-btn');
-                    const systemId = card.dataset.systemId;
-                    const docId = cell.closest('tr').dataset.docId;
-                    const column = cell.dataset.column;
-                    const value = cell.innerText;
-
-                    if (!changesToSave[systemId]) changesToSave[systemId] = {};
-                    if (!changesToSave[systemId][docId]) changesToSave[systemId][docId] = {};
-
-                    changesToSave[systemId][docId][column] = value;
-                    saveBtn.classList.remove('hidden');
-                }
-            });
-
             mainContainer.addEventListener('click', async (event) => {
                 const target = event.target.closest('button');
                 if (!target) return;
@@ -321,6 +312,7 @@
                 const systemId = card.dataset.systemId;
                 const saveStatus = card.querySelector('.save-status');
 
+                // --- Handle Save Changes ---
                 if (target.classList.contains('save-changes-btn')) {
                     const changesForSystem = changesToSave[systemId];
                     if (!changesForSystem) return;
@@ -353,6 +345,7 @@
                     }
                 }
 
+                // --- Handle Add Row ---
                 if (target.classList.contains('add-row-btn')) {
                     try {
                         saveState();
@@ -369,6 +362,23 @@
                     } catch (error) {
                         alert(`新增失败: ${error.message}`);
                     }
+                }
+            });
+             mainContainer.addEventListener('input', (event) => {
+                const cell = event.target;
+                if (cell.tagName === 'TD' && cell.isContentEditable) {
+                    const card = cell.closest('.system-card');
+                    const saveBtn = card.querySelector('.save-changes-btn');
+                    const systemId = card.dataset.systemId;
+                    const docId = cell.closest('tr').dataset.docId;
+                    const column = cell.dataset.column;
+                    const value = cell.innerText;
+
+                    if (!changesToSave[systemId]) changesToSave[systemId] = {};
+                    if (!changesToSave[systemId][docId]) changesToSave[systemId][docId] = {};
+
+                    changesToSave[systemId][docId][column] = value;
+                    saveBtn.classList.remove('hidden');
                 }
             });
         });
