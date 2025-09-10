@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale-1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智能投喂决策系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -12,8 +12,8 @@
         .prose h3 { margin-top: 0; }
         .prose p { margin-bottom: 0.5rem; }
         [contenteditable]:focus {
-            background-color: #fefcbf; /* 黄色高亮 */
-            outline: 2px solid #facc15; /* 黄色边框 */
+            background-color: #fefcbf;
+            outline: 2px solid #facc15;
         }
     </style>
 </head>
@@ -22,21 +22,21 @@
     <header class="bg-white shadow-md sticky top-0 z-10">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold text-blue-600">智能投喂决策系统</h1>
-            <a href="/download_log" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">下载完整日志</a>
         </div>
     </header>
 
-    <main class="container mx-auto p-4">
+    <main class="container mx-auto p-4" id="main-container">
+        <!-- Prediction Section -->
         <div class="lg:flex lg:space-x-8">
-            <!-- Input Form Section -->
+            <!-- Input Form -->
             <div class="w-full lg:w-1/3">
                 <div class="bg-white p-6 rounded-lg shadow-lg">
                     <h2 class="text-xl font-bold mb-4 border-b pb-2">输入养殖参数</h2>
                     <form id="prediction-form" class="space-y-4">
+                        <div><label for="system_id" class="block text-sm font-medium text-gray-700">系统ID</label><input type="text" id="system_id" name="system_id" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div><label for="month_day" class="block text-sm font-medium text-gray-700">月日</label><input type="text" id="month_day" name="month_day" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                            <div><label for="system_id" class="block text-sm font-medium text-gray-700">系统ID</label><input type="text" id="system_id" name="system_id" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                            <div><label for="age_in_days" class="block text-sm font-medium text-gray-700">日龄</label><input type="number" step="any" id="age_in_days" name="age_in_days" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                            <div><label for="age_in_days" class="block text-sm font-medium text-gray-700">养殖天数</label><input type="number" step="any" id="age_in_days" name="age_in_days" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
                             <div><label for="number_of_meals" class="block text-sm font-medium text-gray-700">日投喂餐数</label><input type="number" step="any" id="number_of_meals" name="number_of_meals" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
                             <div><label for="average_water_temp" class="block text-sm font-medium text-gray-700">平均水温 (°C)</label><input type="number" step="any" id="average_water_temp" name="average_water_temp" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
                             <div><label for="average_do" class="block text-sm font-medium text-gray-700">平均溶解氧 (mg/L)</label><input type="number" step="any" id="average_do" name="average_do" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
@@ -58,7 +58,7 @@
                 </div>
             </div>
 
-            <!-- Result Section -->
+            <!-- Result Display -->
             <div class="w-full lg:w-2/3 mt-8 lg:mt-0">
                 <div id="results-area" class="bg-white p-6 rounded-lg shadow-lg min-h-full">
                     <h2 class="text-xl font-bold mb-4 border-b pb-2">预测结果</h2>
@@ -75,221 +75,224 @@
         </div>
 
         <!-- History Section -->
-        <div class="mt-8 bg-white p-6 rounded-lg shadow-lg">
-            <div class="flex justify-between items-center border-b pb-2 mb-4">
-                <h2 class="text-xl font-bold">历史记录</h2>
-                <div class="flex items-center space-x-2">
-                     <div id="save-status" class="text-sm text-gray-500 transition-opacity duration-300 opacity-0"></div>
-                     <button id="add-row-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">
-                        新增一行
-                    </button>
-                     <button id="save-changes-btn" class="hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">
-                        保存更改
-                    </button>
-                    <button id="refresh-history-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">
-                        刷新
-                    </button>
+        <div id="history-section">
+            {% if error_message %}
+                <div class="mt-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <strong class="font-bold">错误!</strong>
+                    <span class="block sm:inline">{{ error_message }}</span>
                 </div>
-            </div>
-            <div id="history-table-container" class="overflow-x-auto">
-                {{ history_table|safe }}
-            </div>
+            {% elif systems_data %}
+                {% for system_id, logs in systems_data.items() %}
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-lg system-card" data-system-id="{{ system_id }}">
+                    <div class="flex flex-wrap justify-between items-center border-b pb-2 mb-4">
+                        <h2 class="text-2xl font-bold text-gray-700">系统ID: {{ system_id }}</h2>
+                        <div class="flex items-center space-x-2 mt-2 sm:mt-0">
+                            <div class="save-status text-sm text-gray-500 transition-opacity duration-300 opacity-0"></div>
+                            <button class="add-row-btn bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">新增一行</button>
+                            <button class="save-changes-btn hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">保存更改</button>
+                            <a href="/download_log/{{ system_id }}" class="download-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">下载日志</a>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto history-table-container">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <!-- All Headers -->
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">月日</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">系统ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">水温(°C)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">溶氧(mg/L)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">pH值</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">氨氮(mg/L)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">亚硝酸盐(mg/L)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">换水量(m³)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">换水率(%)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">养殖天数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">单虾重(g)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">存塘量(斤/m³)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">水体容量(m³)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成活率</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日均增重(g)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日投喂餐数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LGBM预测(kg)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">公式预测(kg)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最终投喂量(kg)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">实际投喂量(kg)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备注</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for log in logs %}
+                                <tr data-doc-id="{{ log.id }}">
+                                    <!-- All Cells -->
+                                    <td contenteditable="true" data-column="Date" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Date', '') }}</td>
+                                    <td contenteditable="true" data-column="month_day" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('month_day', '') }}</td>
+                                    <td contenteditable="true" data-column="system_id" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('system_id', '') }}</td>
+                                    <td contenteditable="true" data-column="average_water_temp" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('average_water_temp', '') }}</td>
+                                    <td contenteditable="true" data-column="average_do" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('average_do', '') }}</td>
+                                    <td contenteditable="true" data-column="average_ph" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('average_ph', '') }}</td>
+                                    <td contenteditable="true" data-column="ammonia_nitrogen" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('ammonia_nitrogen', '') }}</td>
+                                    <td contenteditable="true" data-column="nitrite_nitrogen" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('nitrite_nitrogen', '') }}</td>
+                                    <td contenteditable="true" data-column="water_change_amount" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('water_change_amount', '') }}</td>
+                                    <td contenteditable="true" data-column="water_change_rate" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('water_change_rate', '') }}</td>
+                                    <td contenteditable="true" data-column="age_in_days" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('age_in_days', '') }}</td>
+                                    <td contenteditable="true" data-column="weight" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('weight', '') }}</td>
+                                    <td contenteditable="true" data-column="shrimp_loading_cap" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('shrimp_loading_cap', '') }}</td>
+                                    <td contenteditable="true" data-column="water_body_capacity" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('water_body_capacity', '') }}</td>
+                                    <td contenteditable="true" data-column="survival_rate" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('survival_rate', '') }}</td>
+                                    <td contenteditable="true" data-column="avg_daily_weight_gain" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('avg_daily_weight_gain', '') }}</td>
+                                    <td contenteditable="true" data-column="number_of_meals" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('number_of_meals', '') }}</td>
+                                    <td contenteditable="true" data-column="LGBM_Prediction_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('LGBM_Prediction_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Formula_Prediction_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Formula_Prediction_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Final_Predicted_Amount_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Final_Predicted_Amount_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Actual_Feeding_Amount_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Actual_Feeding_Amount_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Remarks" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Remarks', '') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="mt-8 text-center py-10 text-gray-500 bg-white rounded-lg shadow-lg">
+                    <p>当前没有任何系统的历史记录。</p>
+                </div>
+            {% endif %}
         </div>
     </main>
 
     <script>
-        const form = document.getElementById('prediction-form');
-        const resultsContent = document.getElementById('results-content');
-        const placeholder = document.getElementById('placeholder');
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('prediction-form');
+            const mainContainer = document.getElementById('main-container');
+            let changesToSave = {};
 
-        // Helper function to save current form and result state
-        function saveCurrentState() {
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            sessionStorage.setItem('formData', JSON.stringify(data));
+            // --- Prediction Form Submission ---
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
 
-            const resultData = resultsContent.innerHTML;
-            if (resultData && !placeholder.classList.contains('hidden')) {
-                 sessionStorage.setItem('predictionResultHTML', resultData);
-            }
-        }
+                const spinner = document.getElementById('spinner');
+                const placeholder = document.getElementById('placeholder');
+                const resultsContent = document.getElementById('results-content');
+                const resultsArea = document.getElementById('results-area');
 
-        // Helper function to restore state
-        function restoreState() {
-            // Restore form data
-            const savedFormData = sessionStorage.getItem('formData');
-            if (savedFormData) {
-                const data = JSON.parse(savedFormData);
-                for (const key in data) {
-                    if (form.elements[key]) {
-                        form.elements[key].value = data[key];
-                    }
-                }
-            }
-            // Restore prediction result
-            const savedResultHTML = sessionStorage.getItem('predictionResultHTML');
-            if (savedResultHTML) {
+                resultsArea.scrollIntoView({ behavior: 'smooth' });
                 placeholder.classList.add('hidden');
-                resultsContent.innerHTML = savedResultHTML;
-            }
-            // Restore and display status message
-            const statusMessage = sessionStorage.getItem('statusMessage');
-            if (statusMessage) {
-                const { text, type } = JSON.parse(statusMessage);
-                const statusDiv = document.getElementById('save-status');
-                statusDiv.textContent = text;
-                statusDiv.classList.add(type === 'success' ? 'text-green-500' : 'text-red-500');
-                statusDiv.classList.add('opacity-100');
-                setTimeout(() => {
-                    statusDiv.classList.remove('opacity-100');
-                }, 3000);
-                sessionStorage.removeItem('statusMessage');
-            }
-            // Clean up sessionStorage
-            sessionStorage.removeItem('formData');
-            sessionStorage.removeItem('predictionResultHTML');
-        }
+                resultsContent.innerHTML = '';
+                spinner.classList.remove('hidden');
 
-        // Run restore on page load
-        window.addEventListener('DOMContentLoaded', restoreState);
-
-        // Handle form submission
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const formData = new FormData(event.target);
-            const data = Object.fromEntries(formData.entries());
-            const spinner = document.getElementById('spinner');
-            const resultsArea = document.getElementById('results-area');
-
-            resultsArea.scrollIntoView({ behavior: 'smooth' });
-            placeholder.classList.add('hidden');
-            resultsContent.innerHTML = '';
-            spinner.classList.remove('hidden');
-
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                if (!response.ok) {
-                    throw new Error(result.error || `HTTP 错误! 状态: ${response.status}`);
-                }
-
-                // On success, save everything and reload
-                const newResultHTML = marked.parse(result.recommendation);
-                sessionStorage.setItem('formData', JSON.stringify(data));
-                sessionStorage.setItem('predictionResultHTML', newResultHTML);
-                window.location.reload();
-
-            } catch (error) {
-                // On error, save inputs and error message, then reload
-                const errorHTML = `<p class="text-red-500 font-bold">请求出错:</p><p class="text-red-700">${error.message}</p>`;
-                sessionStorage.setItem('formData', JSON.stringify(data));
-                sessionStorage.setItem('predictionResultHTML', errorHTML);
-                window.location.reload();
-            }
-        });
-
-        // Handle manual refresh button
-        document.getElementById('refresh-history-btn').addEventListener('click', () => {
-            saveCurrentState();
-            window.location.reload();
-        });
-
-        // ----- SCRIPT FOR EDITABLE TABLE AND ADDING ROWS -----
-        const historyContainer = document.getElementById('history-table-container');
-        const saveBtn = document.getElementById('save-changes-btn');
-        const addBtn = document.getElementById('add-row-btn');
-        const saveStatus = document.getElementById('save-status');
-        let changesToSave = {};
-
-        // Listen for edits in the table
-        historyContainer.addEventListener('input', (event) => {
-            const cell = event.target;
-            if (cell.tagName === 'TD' && cell.isContentEditable) {
-                const row = cell.closest('tr');
-                const originalIndex = row.dataset.originalIndex;
-                const column = cell.dataset.column;
-                const value = cell.innerText;
-
-                if (!changesToSave[originalIndex]) {
-                    changesToSave[originalIndex] = {};
-                }
-                changesToSave[originalIndex][column] = value;
-                saveBtn.classList.remove('hidden');
-            }
-        });
-
-        // Handle Save Changes button
-        saveBtn.addEventListener('click', async () => {
-            const promises = [];
-            for (const index in changesToSave) {
-                for (const column in changesToSave[index]) {
-                    const value = changesToSave[index][column];
-                    const payload = { index, column, value };
-
-                    const promise = fetch('/update_log', {
+                try {
+                    const response = await fetch('/predict', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    }).then(response => {
-                        if (!response.ok) {
-                           return response.json().then(err => Promise.reject(err));
-                        }
-                        return response.json();
+                        body: JSON.stringify(data)
                     });
-                    promises.push(promise);
+                    const result = await response.json();
+                    if (!response.ok) {
+                        throw new Error(result.error || `HTTP 错误! 状态: ${response.status}`);
+                    }
+
+                    resultsContent.innerHTML = marked.parse(result.recommendation);
+                    setTimeout(() => window.location.reload(), 2000);
+
+                } catch (error) {
+                    resultsContent.innerHTML = `<p class="text-red-500 font-bold">请求出错:</p><p class="text-red-700">${error.message}</p>`;
+                } finally {
+                    spinner.classList.add('hidden');
                 }
-            }
+            });
 
-            try {
-                saveStatus.textContent = '正在保存...';
-                saveStatus.classList.remove('text-red-500', 'text-green-500');
-                saveStatus.classList.add('opacity-100');
+            // --- History Section Event Delegation ---
+            mainContainer.addEventListener('input', (event) => {
+                const cell = event.target;
+                if (cell.tagName === 'TD' && cell.isContentEditable) {
+                    const card = cell.closest('.system-card');
+                    const saveBtn = card.querySelector('.save-changes-btn');
+                    const systemId = card.dataset.systemId;
+                    const docId = cell.closest('tr').dataset.docId;
+                    const column = cell.dataset.column;
+                    const value = cell.innerText;
 
-                await Promise.all(promises);
+                    if (!changesToSave[systemId]) changesToSave[systemId] = {};
+                    if (!changesToSave[systemId][docId]) changesToSave[systemId][docId] = {};
 
-                saveCurrentState();
-                sessionStorage.setItem('statusMessage', JSON.stringify({ text: '保存成功!', type: 'success' }));
-                window.location.reload();
-
-            } catch (error) {
-                console.error('保存失败:', error);
-                const errorMessage = `保存失败: ${error.error || '未知错误'}`;
-                saveStatus.textContent = errorMessage;
-                saveStatus.classList.add('text-red-500');
-                 setTimeout(() => {
-                    saveStatus.classList.remove('opacity-100');
-                }, 3000);
-            }
-        });
-
-        // Handle Add New Row button
-        addBtn.addEventListener('click', async () => {
-            saveCurrentState(); // Save state before action
-            saveStatus.textContent = '正在新增...';
-            saveStatus.classList.remove('text-red-500', 'text-green-500');
-            saveStatus.classList.add('opacity-100');
-            try {
-                const response = await fetch('/add_row', { method: 'POST' });
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error || 'Failed to add row');
+                    changesToSave[system_id][docId][column] = value;
+                    saveBtn.classList.remove('hidden');
                 }
-                sessionStorage.setItem('statusMessage', JSON.stringify({ text: '新增成功! 请填写新行并保存。', type: 'success' }));
-                window.location.reload();
-            } catch (error) {
-                saveStatus.textContent = `新增失败: ${error.message}`;
-                saveStatus.classList.add('text-red-500');
-                setTimeout(() => {
-                    saveStatus.classList.remove('opacity-100');
-                }, 3000);
-            }
+            });
+
+            mainContainer.addEventListener('click', async (event) => {
+                const target = event.target.closest('button');
+                if (!target) return;
+
+                const card = target.closest('.system-card');
+                if (!card) return;
+
+                const systemId = card.dataset.systemId;
+                const saveStatus = card.querySelector('.save-status');
+
+                // --- Handle Save Changes ---
+                if (target.classList.contains('save-changes-btn')) {
+                    const changesForSystem = changesToSave[systemId];
+                    if (!changesForSystem) return;
+
+                    const payload = {
+                        system_id: systemId,
+                        changes: changesForSystem
+                    };
+
+                    try {
+                        saveStatus.textContent = '正在保存...';
+                        saveStatus.classList.remove('text-red-500', 'text-green-500');
+                        saveStatus.classList.add('opacity-100');
+
+                        // NOTE: Using a new batch update endpoint is better for performance
+                        const response = await fetch('/update_log_batch', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.error);
+
+                        saveStatus.textContent = '保存成功!';
+                        saveStatus.classList.add('text-green-500');
+                        delete changesToSave[systemId];
+                        target.classList.add('hidden');
+                        setTimeout(() => window.location.reload(), 1000);
+
+                    } catch (error) {
+                        saveStatus.textContent = `保存失败: ${error.message}`;
+                        saveStatus.classList.add('text-red-500');
+                    } finally {
+                        setTimeout(() => saveStatus.classList.remove('opacity-100'), 4000);
+                    }
+                }
+
+                // --- Handle Add Row ---
+                if (target.classList.contains('add-row-btn')) {
+                    try {
+                        const response = await fetch('/add_row', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ system_id: systemId })
+                        });
+                        if (!response.ok) {
+                            const err = await response.json();
+                            throw new Error(err.error || 'Failed to add row');
+                        }
+                        window.location.reload();
+                    } catch (error) {
+                        alert(`新增失败: ${error.message}`);
+                    }
+                }
+            });
         });
     </script>
-
 </body>
 </html>
 
