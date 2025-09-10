@@ -169,6 +169,42 @@
             const mainContainer = document.getElementById('main-container');
             let changesToSave = {};
 
+            // --- State Management ---
+            function saveState() {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                sessionStorage.setItem('formData', JSON.stringify(data));
+
+                const resultsContent = document.getElementById('results-content');
+                if (resultsContent.innerHTML && !document.getElementById('placeholder').classList.contains('hidden')) {
+                    sessionStorage.setItem('resultsHTML', resultsContent.innerHTML);
+                }
+            }
+
+            function restoreState() {
+                const savedForm = sessionStorage.getItem('formData');
+                if (savedForm) {
+                    const data = JSON.parse(savedForm);
+                    for (const key in data) {
+                        if (form.elements[key]) {
+                            form.elements[key].value = data[key];
+                        }
+                    }
+                }
+                const savedResult = sessionStorage.getItem('resultsHTML');
+                if (savedResult) {
+                    document.getElementById('placeholder').classList.add('hidden');
+                    document.getElementById('results-content').innerHTML = savedResult;
+                }
+                // Do not clear immediately, clear before unload
+            }
+
+            restoreState();
+
+            window.addEventListener('beforeunload', () => {
+                sessionStorage.clear();
+            });
+
             // --- Prediction Form Submission ---
             form.addEventListener('submit', async function(event) {
                 event.preventDefault();
@@ -196,11 +232,17 @@
                         throw new Error(result.error || `HTTP 错误! 状态: ${response.status}`);
                     }
 
-                    resultsContent.innerHTML = marked.parse(result.recommendation);
-                    setTimeout(() => window.location.reload(), 2000);
+                    const resultHTML = marked.parse(result.recommendation);
+                    resultsContent.innerHTML = resultHTML;
+
+                    setTimeout(() => {
+                        saveState();
+                        window.location.reload();
+                    }, 1500);
 
                 } catch (error) {
-                    resultsContent.innerHTML = `<p class="text-red-500 font-bold">请求出错:</p><p class="text-red-700">${error.message}</p>`;
+                    const errorHTML = `<p class="text-red-500 font-bold">请求出错:</p><p class="text-red-700">${error.message}</p>`;
+                    resultsContent.innerHTML = errorHTML;
                 } finally {
                     spinner.classList.add('hidden');
                 }
@@ -220,7 +262,7 @@
                     if (!changesToSave[systemId]) changesToSave[systemId] = {};
                     if (!changesToSave[systemId][docId]) changesToSave[systemId][docId] = {};
 
-                    changesToSave[system_id][docId][column] = value;
+                    changesToSave[systemId][docId][column] = value;
                     saveBtn.classList.remove('hidden');
                 }
             });
@@ -237,6 +279,7 @@
 
                 // --- Handle Save Changes ---
                 if (target.classList.contains('save-changes-btn')) {
+                    saveState();
                     const changesForSystem = changesToSave[systemId];
                     if (!changesForSystem) return;
 
@@ -250,7 +293,6 @@
                         saveStatus.classList.remove('text-red-500', 'text-green-500');
                         saveStatus.classList.add('opacity-100');
 
-                        // NOTE: Using a new batch update endpoint is better for performance
                         const response = await fetch('/update_log_batch', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -259,16 +301,11 @@
                         const data = await response.json();
                         if (!response.ok) throw new Error(data.error);
 
-                        saveStatus.textContent = '保存成功!';
-                        saveStatus.classList.add('text-green-500');
-                        delete changesToSave[systemId];
-                        target.classList.add('hidden');
-                        setTimeout(() => window.location.reload(), 1000);
+                        window.location.reload();
 
                     } catch (error) {
                         saveStatus.textContent = `保存失败: ${error.message}`;
                         saveStatus.classList.add('text-red-500');
-                    } finally {
                         setTimeout(() => saveStatus.classList.remove('opacity-100'), 4000);
                     }
                 }
@@ -276,6 +313,7 @@
                 // --- Handle Add Row ---
                 if (target.classList.contains('add-row-btn')) {
                     try {
+                        saveState();
                         const response = await fetch('/add_row', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
