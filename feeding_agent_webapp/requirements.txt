@@ -8,3 +8,4 @@ scikit-learn == 1.4.2
 gunicorn
 lightgbm
 firebase-admin
+openpyxl
