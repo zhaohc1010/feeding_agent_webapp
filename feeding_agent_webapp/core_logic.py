@@ -93,7 +93,6 @@ def predict_with_lightgbm(user_data):
     input_df = pd.DataFrame([user_data])[feature_keys]
 
     # --- 【修复】将数据转换为NumPy数组并确保类型为 float32 ---
-    # 这是确保预测准确性的关键步骤，使其与模型训练时的数据类型完全一致。
     input_data_numpy = input_df.values.astype(np.float32)
 
     # 使用类型转换后的NumPy数组进行后续操作
@@ -177,60 +176,91 @@ def calculate_from_formulas(user_data):
     return average_prediction, explanation
 
 
-def get_final_decision_with_remarks(lgbm_pred, formula_pred_tuple, user_data, knowledge_content, historical_data_str):
+def get_final_decision_with_remarks(lgbm_pred, formula_pred_tuple, user_data, knowledge_content, historical_data_str, language='zh'):
     """
     当用户提供了备注时，调用LLM来决定最终使用哪个预测结果。
+    增加 language 参数，支持 zh 和 en
     """
-    print("\n检测到用户备注，正在启动包含历史数据的智能决策模块...")
+    print(f"\n检测到用户备注，正在启动包含历史数据的智能决策模块 (语言: {language})...")
     formula_pred, formula_explanation = formula_pred_tuple
     try:
         client = OpenAI(api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=BASE_URL)
 
-        system_prompt = """
-        你是一位经验丰富的对虾养殖首席专家，任务是作为最终决策者。
-        现有以下信息源供你参考：
-        1. 【LightGBM模型预测值】: 一个纯数据驱动的机器学习模型结果。
-        2. 【内置公式计算结果】: 基于固定规则和公式的计算结果。
-        3. 【知识库全文】: 提供了养殖的宏观策略和背景知识。
-        4. 【历史投喂记录】: 最近的养殖数据、预测值和实际投喂量记录。
-        5. 【用户备注】: 当天的一些特殊情况说明。
+        if language == 'en':
+            role_desc = "You are a Chief Expert in shrimp farming. Your task is to be the final decision maker."
+            instructions = """
+            Your decision process must be:
+            1. Prioritize analyzing key information in the [User Remarks].
+            2. Combine [Knowledge Base] and [Historical Records] to understand the impact of the remarks.
+            3. Evaluate the two prediction values and decide which is more reasonable, or propose a better adjustment.
+            4. Make a final choice and explain your reasoning in detail in ENGLISH.
+            5. At the end, you MUST strictly follow the format '【Final Feeding Amount】: XX.XX' on a new line.
+            """
+            user_intro = "Please make the final judgment based on the following info (Answer in English):"
+            lgbm_label = "LightGBM Prediction"
+            formula_label = "Formula Result"
+            kb_label = "Knowledge Base"
+            history_label = "History Logs"
+            current_label = "Current Data"
+            remarks_label = "User Remarks"
+        else:
+            role_desc = "你是一位经验丰富的对虾养殖首席专家，任务是作为最终决策者。"
+            instructions = """
+            你的决策流程必须是：
+            1. 优先分析【用户备注】中的关键信息。
+            2. 结合【知识库全文】和【历史投喂记录】，理解备注信息对投喂量的影响。
+            3. 综合所有信息，评估两个预测值哪个更合理，或提出一个更优的调整值。
+            4. 做出最终选择，并详细解释你做出此决策的完整理由。
+            5. 在回答的最后，必须另起一行，并严格按照 '【最终投喂量】: XX.XX' 的格式给出你最终采纳的投喂量数值。
+            """
+            user_intro = "请根据以上所有信息，做出最终的投喂量裁决。"
+            lgbm_label = "LightGBM模型预测值"
+            formula_label = "内置公式计算结果"
+            kb_label = "知识库全文"
+            history_label = "历史投喂记录"
+            current_label = "用户实时养殖数据"
+            remarks_label = "用户备注"
 
-        你的决策流程必须是：
-        1. 优先分析【用户备注】中的关键信息。
-        2. 结合【知识库全文】和【历史投喂记录】，理解备注信息对投喂量的影响。
-        3. 综合所有信息，评估两个预测值哪个更合理，或提出一个更优的调整值。
-        4. 做出最终选择，并详细解释你做出此决策的完整理由。
-        5. 在回答的最后，必须另起一行，并严格按照 '【最终投喂量】: XX.XX' 的格式给出你最终采纳的投喂量数值。
+        system_prompt = f"""
+        {role_desc}
+        现有以下信息源供你参考：
+        1. [{lgbm_label}]: 数据驱动的机器学习结果。
+        2. [{formula_label}]: 基于规则的公式计算结果。
+        3. [{kb_label}]: 宏观养殖策略。
+        4. [{history_label}]: 最近的养殖记录。
+        5. [{remarks_label}]: 当天的特殊情况。
+
+        {instructions}
         """
 
         user_prompt = f"""
-        【LightGBM模型预测值】: {lgbm_pred:.4f} kg
+        【{lgbm_label}】: {lgbm_pred:.4f} kg
 
-        【内置公式计算结果】: {formula_pred:.4f} kg
+        【{formula_label}】: {formula_pred:.4f} kg
         计算依据: {formula_explanation}
         ---
 
-        【知识库全文】:
+        【{kb_label}】:
         ---
         {knowledge_content}
         ---
 
-        【历史投喂记录】 (最近10条):
+        【{history_label}】 (最近10条):
         ---
         {historical_data_str}
         ---
 
-        【用户实时养殖数据】:
+        【{current_label}】:
         ---
         {user_data}
         ---
 
-        【用户备注】:
+        【{remarks_label}】:
         ---
         {user_data.get('remarks')}
         ---
 
-        请根据以上所有信息，做出最终的投喂量裁决。
+        {user_intro}
         """
 
         completion = client.chat.completions.create(model=MODEL_NAME,
@@ -249,7 +279,8 @@ def log_data_to_excel(user_data, lgbm_pred, formula_pred, final_pred_text):
     """
     print(f"\n正在记录数据到Excel文件: '{LOG_FILE_PATH}'...")
     try:
-        final_amount_match = re.search(r'【最终投喂量】:\s*(\d+\.?\d*)', final_pred_text)
+        # 修改正则以支持中英文标签
+        final_amount_match = re.search(r'(?:【最终投喂量】|【Final Feeding Amount】):\s*(\d+\.?\d*)', final_pred_text)
         final_amount = float(final_amount_match.group(1)) if final_amount_match else '提取失败'
 
         headers_en = [
@@ -300,4 +331,3 @@ def log_data_to_excel(user_data, lgbm_pred, formula_pred, final_pred_text):
         print(f"\n错误：权限被拒绝！请关闭Excel文件 '{LOG_FILE_PATH}' 后重试。")
     except Exception as e:
         print(f"写入Excel时发生错误: {e}")
-

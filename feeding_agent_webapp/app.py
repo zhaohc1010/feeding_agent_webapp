@@ -19,6 +19,7 @@ from core_logic import (
     get_final_decision_with_remarks
 )
 from config import KNOWLEDGE_BASE_PATH
+from translations import TRANSLATIONS  # 导入翻译字典
 
 # --- Firebase Initialization ---
 try:
@@ -52,12 +53,10 @@ FULL_COLUMNS = [
 ]
 
 
-# --- 全局错误处理器 (本次新增的核心修复) ---
+# --- 全局错误处理器 ---
 @app.errorhandler(Exception)
 def handle_exception(e):
-    # Pass through HTTP errors (like 404)
     if isinstance(e, HTTPException):
-        # In a JSON API, it's better to return JSON for HTTP errors too
         response = e.get_response()
         response.data = json.dumps({
             "code": e.code,
@@ -67,12 +66,9 @@ def handle_exception(e):
         response.content_type = "application/json"
         return response
 
-    # Handle non-HTTP exceptions (i.e., code crashes)
     print(f"Unhandled Server Exception: {e}")
     import traceback
-    traceback.print_exc()  # This will print the full error to your Render logs
-
-    # Return a JSON response
+    traceback.print_exc()
     return jsonify(error=f"服务器发生意外错误，请检查日志。错误信息: {str(e)}"), 500
 
 
@@ -110,7 +106,8 @@ def log_data_to_firestore(system_id, user_data, lgbm_pred, formula_pred, final_p
     if not logs_collection:
         return
 
-    final_amount_match = re.search(r'【最终投喂量】:\s*(\d+\.?\d*)', final_pred_text)
+    # 修改正则以支持中英文标签
+    final_amount_match = re.search(r'(?:【最终投喂量】|【Final Feeding Amount】):\s*(\d+\.?\d*)', final_pred_text)
     final_amount = float(final_amount_match.group(1)) if final_amount_match else None
 
     new_log_data = {
@@ -148,8 +145,15 @@ def log_data_to_firestore(system_id, user_data, lgbm_pred, formula_pred, final_p
 
 @app.route('/')
 def index():
+    # 获取语言参数，默认为 zh
+    lang = request.args.get('lang', 'zh')
+    if lang not in TRANSLATIONS:
+        lang = 'zh'
+    t = TRANSLATIONS[lang]
+
     if not db:
-        return render_template('index.html', systems_data={}, error_message="数据库未连接，请检查服务器配置。")
+        return render_template('index.html', systems_data={}, error_message="数据库未连接，请检查服务器配置。", t=t,
+                               lang=lang)
 
     systems_data = {}
     system_docs = db.collection('systems').order_by("last_updated", direction=firestore.Query.DESCENDING).stream()
@@ -161,20 +165,26 @@ def index():
         if records:
             systems_data[system_id] = records
 
-    return render_template('index.html', systems_data=systems_data)
+    return render_template('index.html', systems_data=systems_data, t=t, lang=lang)
 
 
 @app.route('/predict', methods=['POST'])
 def predict():
     user_data = request.json
+
+    # 获取语言设置
+    lang = user_data.get('language', 'zh')
+    t = TRANSLATIONS[lang if lang in TRANSLATIONS else 'zh']
+
     system_id = user_data.get('system_id')
     if not system_id or not system_id.strip():
-        return jsonify({'error': '系统ID (System ID) 不能为空。'}), 400
+        return jsonify({'error': 'System ID cannot be empty.' if lang == 'en' else '系统ID (System ID) 不能为空。'}), 400
 
     for key, value in user_data.items():
-        if key not in ['system_id', 'month_day', 'remarks']:
+        if key not in ['system_id', 'month_day', 'remarks', 'language']:
             if key not in ['actual_feeding_amount'] and (value is None or value == ''):
-                return jsonify({'error': f'参数 {key} 不能为空。'}), 400
+                msg = f'Parameter {key} cannot be empty.' if lang == 'en' else f'参数 {key} 不能为空。'
+                return jsonify({'error': msg}), 400
             try:
                 user_data[key] = float(value) if value is not None and value != '' else None
             except (ValueError, TypeError):
@@ -188,21 +198,27 @@ def predict():
     if lgbm_prediction is not None and formula_prediction is not None:
         if user_data.get('remarks') and user_data.get('remarks').strip():
             if not os.getenv("DASHSCOPE_API_KEY"):
-                return jsonify({'error': '服务器配置错误：智能决策模块所需的API密钥未设置。'}), 500
+                return jsonify({
+                                   'error': 'API Key Error.' if lang == 'en' else '服务器配置错误：智能决策模块所需的API密钥未设置。'}), 500
 
             knowledge = read_knowledge_base()
             historical_data = read_historical_data_from_firestore(system_id)
+            # 传递 language 参数
             final_recommendation = get_final_decision_with_remarks(
                 lgbm_prediction, formula_prediction_tuple, user_data,
-                knowledge if knowledge else "知识库未找到或读取失败。", historical_data
+                knowledge if knowledge else "知识库未找到或读取失败。", historical_data,
+                language=lang
             )
         else:
-            final_recommendation = (f"根据LightGBM模型的计算，建议的投喂量为 {lgbm_prediction:.4f} 公斤。\n\n"
-                                    f"【最终投喂量】: {lgbm_prediction:.4f}")
+            prefix = t['lgbm_only_prefix']
+            label = t['final_amount_label']
+            final_recommendation = (f"{prefix} {lgbm_prediction:.4f} kg.\n\n"
+                                    f"{label}: {lgbm_prediction:.4f}")
     else:
-        final_recommendation = "一个或多个模型预测失败，无法生成最终建议。"
+        final_recommendation = t['model_fail']
 
-    if "失败" not in final_recommendation:
+    # 只要没有包含“失败”或英文的“failed”，就记录日志
+    if "失败" not in final_recommendation and "failed" not in final_recommendation.lower():
         log_data_to_firestore(system_id, user_data, lgbm_prediction, formula_prediction, final_recommendation)
 
     return jsonify({'recommendation': final_recommendation})
@@ -216,7 +232,7 @@ def update_log_batch():
 
     system_doc_ref, logs_collection = get_system_and_logs_refs(system_id)
     if not logs_collection:
-        return jsonify({'error': '数据库未连接或系统ID无效'}), 500
+        return jsonify({'error': 'Database Error'}), 500
 
     batch = db.batch()
     for doc_id, doc_changes in changes.items():
@@ -242,7 +258,7 @@ def add_row():
     system_id = request.json.get('system_id')
     system_doc_ref, logs_collection = get_system_and_logs_refs(system_id)
     if not logs_collection:
-        return jsonify({'error': '数据库未连接或系统ID无效'}), 500
+        return jsonify({'error': 'Database Error'}), 500
 
     system_doc_ref.set({'last_updated': firestore.SERVER_TIMESTAMP, 'system_id': system_id.strip()}, merge=True)
 
@@ -257,12 +273,12 @@ def add_row():
 def download_log(system_id):
     _, logs_collection = get_system_and_logs_refs(system_id)
     if not logs_collection:
-        return "数据库未连接或系统ID无效", 400
+        return "Database Error", 400
 
     docs = logs_collection.order_by('timestamp', direction=firestore.Query.DESCENDING).stream()
     records = [doc.to_dict() for doc in docs]
     if not records:
-        return "日志为空，无可下载内容。", 404
+        return "Log Empty", 404
 
     df = pd.DataFrame(records)
     export_columns = [col for col in FULL_COLUMNS if col in df.columns]
@@ -279,4 +295,3 @@ def download_log(system_id):
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
-
