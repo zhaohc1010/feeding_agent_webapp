@@ -7,31 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif, -apple-system, BlinkMacSystemFont; background-color: #f0f4f8; }
+        body { font-family: 'Inter', sans-serif; background-color: #f0f4f8; }
         .form-input:focus { box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); border-color: #4299e1; }
-        .prose h3 { margin-top: 0; }
         .prose p { margin-bottom: 0.5rem; }
-        [contenteditable]:focus {
-            background-color: #fefcbf;
-            outline: 2px solid #facc15;
-        }
-        .nav-btn {
-            transition: all 0.2s ease-in-out;
-        }
-        .nav-btn.active {
-            background-color: #3b82f6;
-            color: white;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-        .system-title {
-            background: linear-gradient(to right, #4f46e5, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        /* Increase label font size */
-        label {
-            font-size: 0.95rem;
-        }
+        [contenteditable]:focus { background-color: #fefcbf; outline: 2px solid #facc15; }
+        .nav-btn.active { background-color: #3b82f6; color: white; }
+        .system-title { background: linear-gradient(to right, #4f46e5, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        label { font-size: 0.95rem; font-weight: 600; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -48,9 +30,6 @@
                 </div>
             </div>
             <button id="lang-toggle" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded inline-flex items-center transition duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                </svg>
                 <span>{{ t['lang_btn'] }}</span>
             </button>
         </div>
@@ -58,12 +37,8 @@
 
     <main class="container mx-auto p-4" id="main-container">
         <div class="mb-6 bg-white p-2 rounded-lg shadow-md flex space-x-2">
-            <button id="nav-predict" class="nav-btn flex-1 text-center py-2 px-4 rounded-md font-semibold">
-                {{ t['nav_predict'] }}
-            </button>
-            <button id="nav-history" class="nav-btn flex-1 text-center py-2 px-4 rounded-md font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200">
-                {{ t['nav_history'] }}
-            </button>
+            <button id="nav-predict" class="nav-btn flex-1 text-center py-2 px-4 rounded-md font-semibold">{{ t['nav_predict'] }}</button>
+            <button id="nav-history" class="nav-btn flex-1 text-center py-2 px-4 rounded-md font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200">{{ t['nav_history'] }}</button>
         </div>
 
         <div id="prediction-view">
@@ -71,30 +46,44 @@
                 <div class="w-full lg:w-1/2">
                     <div class="bg-white p-6 rounded-lg shadow-lg">
                         <h2 class="text-xl font-bold mb-6 border-b pb-3 flex items-center space-x-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M12 21a9 9 0 110-18 9 9 0 010 18z" /></svg>
                             <span>{{ t['input_params_title'] }}</span>
                         </h2>
                         <form id="prediction-form" class="space-y-5">
-                            <div><label for="system_id" class="block font-medium text-gray-700">{{ t['system_id'] }}</label><input type="text" id="system_id" name="system_id" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                            <div><label for="system_id">{{ t['system_id'] }} <span class="text-red-500">*</span></label><input type="text" id="system_id" name="system_id" required placeholder="{{ t['ph_ex'] }} 111" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                                <div><label for="month_day" class="block font-medium text-gray-700">{{ t['month_day'] }}</label><input type="text" id="month_day" name="month_day" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="age_in_days" class="block font-medium text-gray-700">{{ t['age_in_days'] }}</label><input type="number" step="any" id="age_in_days" name="age_in_days" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="number_of_meals" class="block font-medium text-gray-700">{{ t['number_of_meals'] }}</label><input type="number" step="any" id="number_of_meals" name="number_of_meals" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="average_water_temp" class="block font-medium text-gray-700">{{ t['average_water_temp'] }}</label><input type="number" step="any" id="average_water_temp" name="average_water_temp" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="average_do" class="block font-medium text-gray-700">{{ t['average_do'] }}</label><input type="number" step="any" id="average_do" name="average_do" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="average_ph" class="block font-medium text-gray-700">{{ t['average_ph'] }}</label><input type="number" step="any" id="average_ph" name="average_ph" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="ammonia_nitrogen" class="block font-medium text-gray-700">{{ t['ammonia_nitrogen'] }}</label><input type="number" step="any" id="ammonia_nitrogen" name="ammonia_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="nitrite_nitrogen" class="block font-medium text-gray-700">{{ t['nitrite_nitrogen'] }}</label><input type="number" step="any" id="nitrite_nitrogen" name="nitrite_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="weight" class="block font-medium text-gray-700">{{ t['weight'] }}</label><input type="number" step="any" id="weight" name="weight" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="avg_daily_weight_gain" class="block font-medium text-gray-700">{{ t['avg_daily_weight_gain'] }}</label><input type="number" step="any" id="avg_daily_weight_gain" name="avg_daily_weight_gain" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="shrimp_loading_cap" class="block font-medium text-gray-700">{{ t['shrimp_loading_cap'] }}</label><input type="number" step="any" id="shrimp_loading_cap" name="shrimp_loading_cap" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="survival_rate" class="block font-medium text-gray-700">{{ t['survival_rate'] }}</label><input type="number" step="any" id="survival_rate" name="survival_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="water_body_capacity" class="block font-medium text-gray-700">{{ t['water_body_capacity'] }}</label><input type="number" step="any" id="water_body_capacity" name="water_body_capacity" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="water_change_amount" class="block font-medium text-gray-700">{{ t['water_change_amount'] }}</label><input type="number" step="any" id="water_change_amount" name="water_change_amount" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="water_change_rate" class="block font-medium text-gray-700">{{ t['water_change_rate'] }}</label><input type="number" step="any" id="water_change_rate" name="water_change_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="month_day">{{ t['month_day'] }} <span class="text-red-500">*</span></label><input type="text" id="month_day" name="month_day" required placeholder="{{ t['ph_ex'] }} 0805" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="age_in_days">{{ t['age_in_days'] }} <span class="text-red-500">*</span></label><input type="number" step="any" id="age_in_days" name="age_in_days" required placeholder="{{ t['ph_ex'] }} 56" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="number_of_meals">{{ t['number_of_meals'] }}</label><input type="number" step="any" id="number_of_meals" name="number_of_meals" required placeholder="{{ t['ph_ex'] }} 8" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="average_water_temp">{{ t['average_water_temp'] }}</label><input type="number" step="any" id="average_water_temp" name="average_water_temp" required placeholder="{{ t['ph_ex'] }} 32.4" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="average_do">{{ t['average_do'] }}</label><input type="number" step="any" id="average_do" name="average_do" required placeholder="{{ t['ph_ex'] }} 9.3" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="average_ph">{{ t['average_ph'] }}</label><input type="number" step="any" id="average_ph" name="average_ph" required placeholder="{{ t['ph_ex'] }} 6.8" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="ammonia_nitrogen">{{ t['ammonia_nitrogen'] }}</label><input type="number" step="any" id="ammonia_nitrogen" name="ammonia_nitrogen" required placeholder="{{ t['ph_ex'] }} 0.8" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="nitrite_nitrogen">{{ t['nitrite_nitrogen'] }}</label><input type="number" step="any" id="nitrite_nitrogen" name="nitrite_nitrogen" required placeholder="{{ t['ph_ex'] }} 0.09" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="weight">{{ t['weight'] }} <span class="text-red-500">*</span></label><input type="number" step="any" id="weight" name="weight" required placeholder="{{ t['ph_ex'] }} 6.77" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="avg_daily_weight_gain">{{ t['avg_daily_weight_gain'] }} <span class="text-red-500">*</span></label><input type="number" step="any" id="avg_daily_weight_gain" name="avg_daily_weight_gain" required placeholder="{{ t['ph_ex'] }} 0.36" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="shrimp_loading_cap">{{ t['shrimp_loading_cap'] }} <span class="text-red-500">*</span></label><input type="number" step="any" id="shrimp_loading_cap" name="shrimp_loading_cap" required placeholder="{{ t['ph_ex'] }} 9.57" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="survival_rate">{{ t['survival_rate'] }} <span class="text-red-500">*</span></label><input type="number" step="any" id="survival_rate" name="survival_rate" required placeholder="{{ t['ph_ex'] }} 0.93" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="water_body_capacity">{{ t['water_body_capacity'] }} <span class="text-red-500">*</span></label><input type="number" step="any" id="water_body_capacity" name="water_body_capacity" required placeholder="{{ t['ph_ex'] }} 625" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="water_change_amount">{{ t['water_change_amount'] }}</label><input type="number" step="any" id="water_change_amount" name="water_change_amount" required placeholder="{{ t['ph_ex'] }} 37.5" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+
+                                <div><label for="water_change_rate">{{ t['water_change_rate'] }}</label><input type="number" step="any" id="water_change_rate" name="water_change_rate" required placeholder="{{ t['ph_ex'] }} 4.6" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
                             </div>
-                            <div><label for="actual_feeding_amount" class="block font-medium text-gray-700">{{ t['actual_feeding_amount'] }}</label><input type="number" step="any" id="actual_feeding_amount" name="actual_feeding_amount" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                            <div><label for="remarks" class="block font-medium text-gray-700">{{ t['remarks'] }}</label><textarea id="remarks" name="remarks" rows="3" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></textarea></div>
+                            <div><label for="actual_feeding_amount">{{ t['actual_feeding_amount'] }}</label><input type="number" step="any" id="actual_feeding_amount" name="actual_feeding_amount" placeholder="{{ t['ph_ex'] }} 158" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                            <div><label for="remarks">{{ t['remarks'] }}</label><textarea id="remarks" name="remarks" rows="3" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></textarea></div>
                             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 mt-4 text-lg">{{ t['predict_btn'] }}</button>
                         </form>
                     </div>
@@ -118,75 +107,72 @@
 
         <div id="history-view" class="hidden">
             {% if error_message %}
-                <div class="mt-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <strong class="font-bold">{{ t['error_title'] }}</strong>
-                    <span class="block sm:inline">{{ error_message }}</span>
-                </div>
+                <div class="mt-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">{{ error_message }}</div>
             {% elif systems_data %}
                 {% for system_id, logs in systems_data.items() %}
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-lg system-card" data-system-id="{{ system_id }}">
                     <div class="flex flex-wrap justify-between items-center border-b pb-2 mb-4">
                         <h2 class="text-3xl font-bold system-title">{{ system_id }}</h2>
-                        <div class="flex items-center space-x-2 mt-2 sm:mt-0">
-                            <div class="save-status text-sm text-gray-500 transition-opacity duration-300 opacity-0"></div>
-                            <button class="add-row-btn bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">{{ t['add_row'] }}</button>
-                            <button class="save-changes-btn hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">{{ t['save_changes'] }}</button>
-                            <a href="/download_log/{{ system_id }}" class="download-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">{{ t['download_log'] }}</a>
+                        <div class="flex items-center space-x-2">
+                            <div class="save-status text-sm text-gray-500 opacity-0 transition-opacity"></div>
+                            <button class="add-row-btn bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-1 px-4 rounded-lg text-sm">{{ t['add_row'] }}</button>
+                            <button class="save-changes-btn hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-4 rounded-lg text-sm">{{ t['save_changes'] }}</button>
+                            <a href="/download_log/{{ system_id }}" class="download-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-4 rounded-lg text-sm">{{ t['download_log'] }}</a>
                         </div>
                     </div>
                     <div class="overflow-x-auto history-table-container">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_date'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_month_day'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_system_id'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_temp'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_do'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_ph'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_ammonia'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_nitrite'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_water_change'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_water_rate'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_age'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_weight'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_loading'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_capacity'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_survival'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_gain'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_meals'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_lgbm'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_formula'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_final'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_actual'] }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_remarks'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_date'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_month_day'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_system_id'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_temp'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_do'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_ph'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_ammonia'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_nitrite'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_water_change'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_water_rate'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_age'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_weight'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_loading'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_capacity'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_survival'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_gain'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_meals'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_lgbm'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_formula'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_final'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_actual'] }}</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ t['col_remarks'] }}</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 {% for log in logs %}
                                 <tr data-doc-id="{{ log.id }}">
-                                    <td contenteditable="true" data-column="Date" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Date', '') }}</td>
-                                    <td contenteditable="true" data-column="month_day" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('month_day', '') }}</td>
-                                    <td contenteditable="true" data-column="system_id" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('system_id', '') }}</td>
-                                    <td contenteditable="true" data-column="average_water_temp" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('average_water_temp', '') }}</td>
-                                    <td contenteditable="true" data-column="average_do" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('average_do', '') }}</td>
-                                    <td contenteditable="true" data-column="average_ph" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('average_ph', '') }}</td>
-                                    <td contenteditable="true" data-column="ammonia_nitrogen" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('ammonia_nitrogen', '') }}</td>
-                                    <td contenteditable="true" data-column="nitrite_nitrogen" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('nitrite_nitrogen', '') }}</td>
-                                    <td contenteditable="true" data-column="water_change_amount" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('water_change_amount', '') }}</td>
-                                    <td contenteditable="true" data-column="water_change_rate" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('water_change_rate', '') }}</td>
-                                    <td contenteditable="true" data-column="age_in_days" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('age_in_days', '') }}</td>
-                                    <td contenteditable="true" data-column="weight" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('weight', '') }}</td>
-                                    <td contenteditable="true" data-column="shrimp_loading_cap" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('shrimp_loading_cap', '') }}</td>
-                                    <td contenteditable="true" data-column="water_body_capacity" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('water_body_capacity', '') }}</td>
-                                    <td contenteditable="true" data-column="survival_rate" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('survival_rate', '') }}</td>
-                                    <td contenteditable="true" data-column="avg_daily_weight_gain" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('avg_daily_weight_gain', '') }}</td>
-                                    <td contenteditable="true" data-column="number_of_meals" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('number_of_meals', '') }}</td>
-                                    <td contenteditable="true" data-column="LGBM_Prediction_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('LGBM_Prediction_kg', '') }}</td>
-                                    <td contenteditable="true" data-column="Formula_Prediction_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Formula_Prediction_kg', '') }}</td>
-                                    <td contenteditable="true" data-column="Final_Predicted_Amount_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Final_Predicted_Amount_kg', '') }}</td>
-                                    <td contenteditable="true" data-column="Actual_Feeding_Amount_kg" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Actual_Feeding_Amount_kg', '') }}</td>
-                                    <td contenteditable="true" data-column="Remarks" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 outline-none">{{ log.get('Remarks', '') }}</td>
+                                    <td contenteditable="true" data-column="Date" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('Date', '') }}</td>
+                                    <td contenteditable="true" data-column="month_day" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('month_day', '') }}</td>
+                                    <td contenteditable="true" data-column="system_id" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('system_id', '') }}</td>
+                                    <td contenteditable="true" data-column="average_water_temp" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('average_water_temp', '') }}</td>
+                                    <td contenteditable="true" data-column="average_do" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('average_do', '') }}</td>
+                                    <td contenteditable="true" data-column="average_ph" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('average_ph', '') }}</td>
+                                    <td contenteditable="true" data-column="ammonia_nitrogen" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('ammonia_nitrogen', '') }}</td>
+                                    <td contenteditable="true" data-column="nitrite_nitrogen" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('nitrite_nitrogen', '') }}</td>
+                                    <td contenteditable="true" data-column="water_change_amount" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('water_change_amount', '') }}</td>
+                                    <td contenteditable="true" data-column="water_change_rate" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('water_change_rate', '') }}</td>
+                                    <td contenteditable="true" data-column="age_in_days" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('age_in_days', '') }}</td>
+                                    <td contenteditable="true" data-column="weight" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('weight', '') }}</td>
+                                    <td contenteditable="true" data-column="shrimp_loading_cap" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('shrimp_loading_cap', '') }}</td>
+                                    <td contenteditable="true" data-column="water_body_capacity" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('water_body_capacity', '') }}</td>
+                                    <td contenteditable="true" data-column="survival_rate" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('survival_rate', '') }}</td>
+                                    <td contenteditable="true" data-column="avg_daily_weight_gain" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('avg_daily_weight_gain', '') }}</td>
+                                    <td contenteditable="true" data-column="number_of_meals" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('number_of_meals', '') }}</td>
+                                    <td contenteditable="true" data-column="LGBM_Prediction_kg" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('LGBM_Prediction_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Formula_Prediction_kg" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('Formula_Prediction_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Final_Predicted_Amount_kg" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('Final_Predicted_Amount_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Actual_Feeding_Amount_kg" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('Actual_Feeding_Amount_kg', '') }}</td>
+                                    <td contenteditable="true" data-column="Remarks" class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ log.get('Remarks', '') }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -195,9 +181,7 @@
                 </div>
                 {% endfor %}
             {% else %}
-                <div class="mt-8 text-center py-10 text-gray-500 bg-white rounded-lg shadow-lg">
-                    <p>{{ t['no_history'] }}</p>
-                </div>
+                <div class="mt-8 text-center py-10 text-gray-500 bg-white rounded-lg shadow-lg"><p>{{ t['no_history'] }}</p></div>
             {% endif %}
         </div>
     </main>
@@ -212,10 +196,9 @@
             const historyView = document.getElementById('history-view');
             let changesToSave = {};
 
-            // 获取当前语言设置
-            const currentLang = new URLSearchParams(window.location.search).get('lang') || 'zh';
+            // Default to 'en' if not set
+            const currentLang = new URLSearchParams(window.location.search).get('lang') || 'en';
 
-            // 语言切换按钮逻辑
             const langBtn = document.getElementById('lang-toggle');
             if(langBtn) {
                 langBtn.addEventListener('click', () => {
@@ -226,16 +209,12 @@
                 });
             }
 
-            // --- Robust State Management ---
             const APP_STATE_KEY = 'feedingAppState';
-
             function saveState() {
                 const formData = new FormData(form);
-                const data = Object.fromEntries(formData.entries());
                 const resultsContent = document.getElementById('results-content');
-
                 const state = {
-                    formData: data,
+                    formData: Object.fromEntries(formData.entries()),
                     resultsHTML: resultsContent.innerHTML,
                     isPlaceholderHidden: document.getElementById('placeholder').classList.contains('hidden'),
                     activeView: historyView.classList.contains('hidden') ? 'predict' : 'history'
@@ -245,85 +224,47 @@
 
             function restoreState() {
                 const savedStateJSON = sessionStorage.getItem(APP_STATE_KEY);
-                if (!savedStateJSON) {
-                    showPredictionView(); // Default view
-                    return;
-                }
+                if (!savedStateJSON) { showPredictionView(); return; }
                 const state = JSON.parse(savedStateJSON);
-
                 if (state.formData) {
                     for (const key in state.formData) {
-                        if (form.elements[key]) {
-                            form.elements[key].value = state.formData[key];
-                        }
+                        if (form.elements[key]) form.elements[key].value = state.formData[key];
                     }
                 }
                 if (state.resultsHTML && state.isPlaceholderHidden) {
                     document.getElementById('placeholder').classList.add('hidden');
                     document.getElementById('results-content').innerHTML = state.resultsHTML;
                 }
-                if (state.activeView === 'history') {
-                    showHistoryView();
-                } else {
-                    showPredictionView();
-                }
+                state.activeView === 'history' ? showHistoryView() : showPredictionView();
             }
-
             restoreState();
 
-            // --- View Toggling ---
             function showPredictionView() {
-                predictionView.classList.remove('hidden');
-                historyView.classList.add('hidden');
-                navPredict.classList.add('active');
-                navPredict.classList.remove('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
-                navHistory.classList.remove('active');
-                navHistory.classList.add('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+                predictionView.classList.remove('hidden'); historyView.classList.add('hidden');
+                navPredict.classList.add('active'); navPredict.classList.remove('bg-gray-100', 'text-gray-600');
+                navHistory.classList.remove('active'); navHistory.classList.add('bg-gray-100', 'text-gray-600');
             }
-
             function showHistoryView() {
-                predictionView.classList.add('hidden');
-                historyView.classList.remove('hidden');
-                navHistory.classList.add('active');
-                navHistory.classList.remove('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
-                navPredict.classList.remove('active');
-                navPredict.classList.add('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+                predictionView.classList.add('hidden'); historyView.classList.remove('hidden');
+                navHistory.classList.add('active'); navHistory.classList.remove('bg-gray-100', 'text-gray-600');
+                navPredict.classList.remove('active'); navPredict.classList.add('bg-gray-100', 'text-gray-600');
             }
 
-            navPredict.addEventListener('click', () => {
-                saveState();
-                showPredictionView();
-            });
-            navHistory.addEventListener('click', () => {
-                saveState();
-                showHistoryView();
-            });
+            navPredict.addEventListener('click', () => { saveState(); showPredictionView(); });
+            navHistory.addEventListener('click', () => { saveState(); showHistoryView(); });
 
-            // --- Helper for Reloading with State ---
-            function reloadWithState() {
-                saveState();
-                window.location.reload();
-            }
+            function reloadWithState() { saveState(); window.location.reload(); }
 
-
-            // --- Prediction Form Submission ---
             form.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData.entries());
-
-                // 将当前语言传递给后端
                 data.language = currentLang;
 
-                const spinner = document.getElementById('spinner');
-                const placeholder = document.getElementById('placeholder');
-                const resultsContent = document.getElementById('results-content');
-                const resultsArea = document.getElementById('results-area');
-
-                resultsArea.scrollIntoView({ behavior: 'smooth' });
-                placeholder.classList.add('hidden');
-                resultsContent.innerHTML = '';
-                spinner.classList.remove('hidden');
+                document.getElementById('spinner').classList.remove('hidden');
+                document.getElementById('placeholder').classList.add('hidden');
+                document.getElementById('results-content').innerHTML = '';
+                document.getElementById('results-area').scrollIntoView({ behavior: 'smooth' });
 
                 try {
                     const response = await fetch('/predict', {
@@ -332,98 +273,63 @@
                         body: JSON.stringify(data)
                     });
                     const result = await response.json();
-                    if (!response.ok) {
-                        throw new Error(result.error || `HTTP Error: ${response.status}`);
-                    }
+                    if (!response.ok) throw new Error(result.error || `HTTP Error: ${response.status}`);
 
-                    resultsContent.innerHTML = marked.parse(result.recommendation);
-
-                    setTimeout(() => {
-                        reloadWithState();
-                    }, 1500);
-
+                    document.getElementById('results-content').innerHTML = marked.parse(result.recommendation);
+                    setTimeout(() => reloadWithState(), 1500);
                 } catch (error) {
-                    resultsContent.innerHTML = `<p class="text-red-500 font-bold">Request Failed:</p><p class="text-red-700">${error.message}</p>`;
+                    document.getElementById('results-content').innerHTML = `<p class="text-red-500 font-bold">Error:</p><p>${error.message}</p>`;
                 } finally {
-                    spinner.classList.add('hidden');
+                    document.getElementById('spinner').classList.add('hidden');
                 }
             });
 
-            // --- History Section Event Delegation ---
             mainContainer.addEventListener('click', async (event) => {
                 const target = event.target.closest('button');
                 if (!target) return;
-
                 const card = target.closest('.system-card');
                 if (!card) return;
-
                 const systemId = card.dataset.systemId;
-                const saveStatus = card.querySelector('.save-status');
 
                 if (target.classList.contains('save-changes-btn')) {
-                    const changesForSystem = changesToSave[systemId];
-                    if (!changesForSystem) return;
-
-                    const payload = {
-                        system_id: systemId,
-                        changes: changesForSystem
-                    };
-
+                    if (!changesToSave[systemId]) return;
+                    const saveStatus = card.querySelector('.save-status');
                     try {
-                        saveStatus.textContent = currentLang === 'en' ? 'Saving...' : '正在保存...';
-                        saveStatus.classList.remove('text-red-500', 'text-green-500');
+                        saveStatus.textContent = 'Saving...';
                         saveStatus.classList.add('opacity-100');
-
                         const response = await fetch('/update_log_batch', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
+                            body: JSON.stringify({ system_id: systemId, changes: changesToSave[systemId] })
                         });
-                        const data = await response.json();
-                        if (!response.ok) throw new Error(data.error);
-
+                        if (!response.ok) throw new Error('Failed');
                         reloadWithState();
-
                     } catch (error) {
-                        saveStatus.textContent = (currentLang === 'en' ? 'Error: ' : '保存失败: ') + error.message;
-                        saveStatus.classList.add('text-red-500');
-                        setTimeout(() => saveStatus.classList.remove('opacity-100'), 4000);
+                        saveStatus.textContent = 'Error';
                     }
                 }
-
                 if (target.classList.contains('add-row-btn')) {
-                    try {
-                        const response = await fetch('/add_row', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ system_id: systemId })
-                        });
-                        if (!response.ok) {
-                            const err = await response.json();
-                            throw new Error(err.error || 'Failed to add row');
-                        }
-                        reloadWithState();
-                    } catch (error) {
-                        alert(`Error: ${error.message}`);
-                    }
+                    await fetch('/add_row', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ system_id: systemId })
+                    });
+                    reloadWithState();
                 }
             });
 
-             mainContainer.addEventListener('input', (event) => {
+            mainContainer.addEventListener('input', (event) => {
                 const cell = event.target;
                 if (cell.tagName === 'TD' && cell.isContentEditable) {
                     const card = cell.closest('.system-card');
-                    const saveBtn = card.querySelector('.save-changes-btn');
+                    card.querySelector('.save-changes-btn').classList.remove('hidden');
                     const systemId = card.dataset.systemId;
                     const docId = cell.closest('tr').dataset.docId;
                     const column = cell.dataset.column;
-                    const value = cell.innerText;
 
                     if (!changesToSave[systemId]) changesToSave[systemId] = {};
                     if (!changesToSave[systemId][docId]) changesToSave[systemId][docId] = {};
-
-                    changesToSave[systemId][docId][column] = value;
-                    saveBtn.classList.remove('hidden');
+                    changesToSave[systemId][docId][column] = cell.innerText;
                 }
             });
         });
