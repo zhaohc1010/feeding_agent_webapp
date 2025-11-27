@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-智能投喂量预测智能体 - 主程序入口
-"""
+
 import os
 
 # --- 从其他模块导入核心功能 ---
@@ -16,9 +14,7 @@ from core_logic import (
 
 
 def get_user_input():
-    """
-    功能：向用户展示双语提示，并收集所有必要的养殖参数。
-    """
+
     print("=" * 50)
     print("欢迎使用智能投喂量预测智能体")
     print("Welcome to the Smart Feeding Amount Prediction Agent")
@@ -72,40 +68,36 @@ def get_user_input():
     return user_data
 
 
-# ==============================================================================
-#                                  主程序流程
-# ==============================================================================
+
 def run_agent():
-    """
-    执行智能体的完整工作流程。
-    """
+
     if not os.getenv("DASHSCOPE_API_KEY"):
         print("=" * 50, "\n错误：环境变量 'DASHSCOPE_API_KEY' 未设置。\n", "=" * 50)
         return
 
-    # 1. 获取全部用户输入
+    # 1
     user_data = get_user_input()
 
-    # 2. 执行LightGBM预测
+    # 2. LightGBM
     lgbm_prediction = predict_with_lightgbm(user_data)
 
-    # 3. 【修改】执行基于公式的计算
+    # 3.
     formula_prediction_tuple = calculate_from_formulas(user_data)
     formula_prediction, formula_explanation = formula_prediction_tuple if formula_prediction_tuple is not None else (
     None, "计算失败")
 
-    # 打印公式计算详情
+
     print("\n" + "-" * 50)
     print("内置公式计算详情 / Formula Calculation Details")
     print("-" * 50)
     print(formula_explanation)
     print("-" * 50)
 
-    # 4. 智能决策
+
     final_recommendation = ""
     if lgbm_prediction is not None and formula_prediction is not None:
         if user_data.get('remarks'):
-            # 如果有备注，读取知识库和历史数据，启动最终决策模块
+
             knowledge = read_knowledge_base()
             historical_data = read_historical_data()
             final_recommendation = get_final_decision_with_remarks(
@@ -116,7 +108,7 @@ def run_agent():
                 historical_data
             )
         else:
-            # 没有备注，默认使用LightGBM的结果
+
             final_recommendation = (
                 f"根据LightGBM模型的计算，建议的投喂量为 {lgbm_prediction:.4f} 公斤。\n"
                 f"由于未提供备注信息，系统默认采纳此数据驱动模型的预测结果。\n\n"
@@ -125,13 +117,13 @@ def run_agent():
     else:
         final_recommendation = "一个或多个模型预测失败，无法生成最终建议。"
 
-    # 5. 打印最终结果
+
     print("\n" + "=" * 50)
     print("最终投喂建议 / Final Feeding Recommendation")
     print("=" * 50)
     print(final_recommendation)
 
-    # 6. 记录日志
+
     if "失败" not in final_recommendation:
         log_data_to_excel(user_data, lgbm_prediction, formula_prediction, final_recommendation)
 

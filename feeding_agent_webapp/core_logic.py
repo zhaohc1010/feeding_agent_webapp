@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-核心逻辑模块 - 最终完善版
-1. 决策逻辑：恢复了【首席专家 5 步决策法】，但在输出时要求 AI 浓缩总结。
-2. 公式计算：数值区间无缝衔接，无断层。
-3. 模型预测：支持字符串 System ID。
-"""
+
 
 import os
 import re
@@ -20,10 +15,6 @@ from config import LOG_FILE_PATH, MODEL_NAME, BASE_URL, LGBM_MODEL_PATH, KNOWLED
 
 warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
 
-
-# ==============================================================================
-#                               辅助功能
-# ==============================================================================
 
 def read_knowledge_base():
     if not os.path.exists(KNOWLEDGE_BASE_PATH):
@@ -50,10 +41,7 @@ def read_historical_data():
 # ==============================================================================
 
 def predict_with_lightgbm(user_data):
-    """
-    使用 LightGBM 模型预测
-    (已移除强制 float 转换，支持 'A01' 等字符串 ID)
-    """
+
     print("\n[LightGBM] 启动预测...")
     try:
         loaded = joblib.load(LGBM_MODEL_PATH)
@@ -91,10 +79,7 @@ def predict_with_lightgbm(user_data):
 
 
 def calculate_from_formulas(user_data):
-    """
-    内置公式计算
-    (使用 < 判断逻辑，消除数值断层)
-    """
+
     print("\n[Formula] 启动计算...")
     try:
         w = float(user_data.get('weight', 0))
@@ -107,7 +92,7 @@ def calculate_from_formulas(user_data):
 
     count = cap * 500 * vol / w
 
-    # 连续区间判断，防止断层
+
     coeffs = None
     if w < 0.8:
         coeffs = (0.144, 0.162)
@@ -148,11 +133,7 @@ def calculate_from_formulas(user_data):
 
 def get_final_decision_with_remarks(lgbm_pred, formula_pred_tuple, user_data, knowledge_content, historical_data_str,
                                     language='en'):
-    """
-    智能决策模块
-    逻辑：恢复原来的 5 步严谨逻辑。
-    输出：要求 AI 总结输出，而非罗列步骤。
-    """
+
     print(f"\n[AI Decision] 启动决策 (Lang: {language})...")
     formula_pred, formula_explanation = formula_pred_tuple
 
@@ -162,7 +143,7 @@ def get_final_decision_with_remarks(lgbm_pred, formula_pred_tuple, user_data, kn
     try:
         client = OpenAI(api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=BASE_URL)
 
-        # --- 核心提示词构建 ---
+
         if language == 'en':
             system_prompt = """
             You are a Chief Expert in shrimp farming. Your task is to be the final decision maker.
@@ -170,12 +151,10 @@ def get_final_decision_with_remarks(lgbm_pred, formula_pred_tuple, user_data, kn
             Your decision process must STRICTLY follow these steps (Execute these in your mind, but output a CONCISE summary):
             1. Prioritize analyzing key information in the [User Remarks].
             2. Combine [Knowledge Base] and [Historical Records] to understand the impact of the remarks.
-            3. Evaluate the two prediction values (Model vs Formula) to see which is more reasonable.
+            3. Synthesize all the information, evaluate which of the two predicted values is more reasonable, or propose a better adjustment value..
             4. Make a final choice.
-
-            **OUTPUT REQUIREMENT:** Please condense your detailed thinking process into a decision basis (about 500 words), and do not list lengthy steps.
-.
-
+            
+            Generate a decision report (about 500 words).
             At the end, you MUST strictly follow the format '【Final Feeding Amount】: XX.XX' on a new line.
             """
             user_intro = "Please analyze based on the info above and provide a concise decision in English."
@@ -188,10 +167,12 @@ def get_final_decision_with_remarks(lgbm_pred, formula_pred_tuple, user_data, kn
             1. 优先分析【用户备注】中的关键信息。
             2. 结合【知识库全文】和【历史投喂记录】，理解备注信息对投喂量的影响。
             3. 综合所有信息，评估两个预测值哪个更合理，或提出一个更优的调整值。
-            4. 做出最终选择。**注意：请将你的详细思考过程浓缩为一份决策依据（约500字左右），不要列出冗长的步骤。**
-            5. 在回答的最后，必须另起一行，并严格按照 '【最终投喂量】: XX.XX' 的格式给出你最终采纳的投喂量数值。
+            4. 做出最终选择。
+            
+            生成一份决策报告（约600字左右）
+            在回答的最后，必须另起一行，并严格按照 '【最终投喂量】: XX.XX' 的格式给出你最终采纳的投喂量数值。
             """
-            user_intro = "请根据以上信息进行专家决策（保留严谨逻辑，但输出请精简）："
+            user_intro = "请根据以上信息进行专家决策"
             labels = ["LightGBM模型预测值", "内置公式计算结果", "知识库全文", "历史投喂记录", "用户备注"]
 
         user_prompt = f"""
@@ -249,7 +230,7 @@ def log_data_to_excel(user_data, lgbm_pred, formula_pred, final_pred_text):
             'Remarks': user_data.get('remarks')
         }
 
-        # 补全表头确保顺序
+
         headers = list(row.keys())
         new_df = pd.DataFrame([row])
 

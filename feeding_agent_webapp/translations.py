@@ -35,7 +35,7 @@ TRANSLATIONS = {
         'actual_feeding_amount': '实际投喂量 (kg) [可选]',
         'remarks': '备注 [可选]',
 
-        # 表格列标题 (确保这些Key存在)
+
         'col_date': '日期',
         'col_month_day': '月日',
         'col_system_id': '系统ID',
@@ -63,7 +63,7 @@ TRANSLATIONS = {
         'model_fail': '模型预测失败。',
         'lgbm_only_prefix': '根据LightGBM模型的计算，建议的投喂量为',
         'final_amount_label': '【最终投喂量】',
-        'ph_ex': '例'  # 占位符前缀
+        'ph_ex': '例'
     },
     'en': {
         'title': 'Smart Feeding Decision System',

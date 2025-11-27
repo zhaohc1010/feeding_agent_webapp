@@ -136,7 +136,7 @@ def log_data_to_firestore(system_id, user_data, lgbm_pred, formula_pred, final_p
 
 @app.route('/')
 def index():
-    # 默认语言改为 'en' (Default to English)
+
     lang = request.args.get('lang', 'en')
     if lang not in TRANSLATIONS:
         lang = 'en'
@@ -166,7 +166,7 @@ def index():
 def predict():
     user_data = request.json
 
-    # 默认语言改为 'en'
+
     lang = user_data.get('language', 'en')
     t = TRANSLATIONS[lang if lang in TRANSLATIONS else 'en']
 
