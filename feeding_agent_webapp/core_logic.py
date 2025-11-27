@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
+"""
+核心逻辑模块
+包含了所有的数据处理、模型预测和日志记录功能。
+"""
 
-
+# --- 基础库导入 ---
 import os
 import re
 import warnings
 from datetime import datetime
 
+# --- 第三方库导入 ---
 import pandas as pd
 import docx
 import joblib
@@ -13,16 +18,23 @@ import numpy as np
 from openai import OpenAI
 from sklearn.exceptions import InconsistentVersionWarning
 
+# --- 从配置文件导入变量 ---
 from config import LOG_FILE_PATH, MODEL_NAME, BASE_URL, LGBM_MODEL_PATH, KNOWLEDGE_BASE_PATH
 
+# --- 管理警告信息 ---
 warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
 
 
-def read_knowledge_base():
+# ==============================================================================
+#                               辅助功能
+# ==============================================================================
 
+def read_knowledge_base():
+    """
+    功能：读取指定的 .docx Word文档，并提取所有文本内容。
+    """
     if not os.path.exists(KNOWLEDGE_BASE_PATH):
         # 仅在非开发环境打印错误，避免干扰日志
-        # print(f"错误：知识库文件 '{KNOWLEDGE_BASE_PATH}' 未找到。")
         return None
     try:
         document = docx.Document(KNOWLEDGE_BASE_PATH)
@@ -33,7 +45,9 @@ def read_knowledge_base():
 
 
 def read_historical_data():
-
+    """
+    功能：读取Excel日志文件，并返回最近10条记录作为字符串。
+    """
     print("\n正在读取历史投喂记录...")
     if not os.path.exists(LOG_FILE_PATH):
         return "尚无历史投喂记录。"
@@ -41,7 +55,6 @@ def read_historical_data():
         df = pd.read_excel(LOG_FILE_PATH)
         if df.empty:
             return "历史投喂记录文件为空。"
-        # 返回尾部最新的10条记录，并转换为字符串
         return df.tail(10).to_string()
     except Exception as e:
         return f"读取历史记录时发生错误: {e}"
@@ -52,7 +65,9 @@ def read_historical_data():
 # ==============================================================================
 
 def predict_with_lightgbm(user_data):
-
+    """
+    使用加载的LightGBM模型进行预测。
+    """
     print("\n正在使用 LightGBM 模型进行预测...")
     try:
         loaded_artifacts = joblib.load(LGBM_MODEL_PATH)
@@ -73,17 +88,17 @@ def predict_with_lightgbm(user_data):
         "survival_rate", "avg_daily_weight_gain", "number_of_meals"
     ]
 
-
+    # 检查是否缺少必要的键
     missing_keys = [key for key in feature_keys if key not in user_data]
     if missing_keys:
         print(f"错误：用户输入数据缺少LightGBM模型所需的字段: {missing_keys}")
         return None
 
-
+    # 构建 DataFrame
     input_df = pd.DataFrame([user_data])[feature_keys]
 
     try:
-
+        # 直接传入 input_df，让 input_scaler 自动处理类型转换（包括 system_id 字符串）
         input_data_scaled = input_scaler.transform(input_df)
 
         prediction_scaled = model.predict(input_data_scaled)
@@ -96,19 +111,20 @@ def predict_with_lightgbm(user_data):
 
     except Exception as e:
         print(f"预测计算过程中发生错误: {e}")
-        # 打印堆栈跟踪以便调试
         import traceback
         traceback.print_exc()
         return None
 
 
 def calculate_from_formulas(user_data):
-
+    """
+    根据用户提供的硬编码公式计算投喂量。
+    返回一个元组 (预测值, 计算依据说明)。
+    """
     print("\n正在根据内置公式进行计算...")
     weight = user_data.get('weight')
     shrimp_loading_cap = user_data.get('shrimp_loading_cap')
     water_body_capacity = user_data.get('water_body_capacity')
-
 
     if not all([isinstance(weight, (int, float)),
                 isinstance(shrimp_loading_cap, (int, float)),
@@ -122,7 +138,6 @@ def calculate_from_formulas(user_data):
         return None, "错误：对虾体重为0，无法计算预估数量。"
 
     coeffs = None
-
     if 0.50 <= weight <= 0.60:
         coeffs = (0.144, 0.162)
     elif 0.98 <= weight <= 1.12:
@@ -173,25 +188,28 @@ def calculate_from_formulas(user_data):
 
 def get_final_decision_with_remarks(lgbm_pred, formula_pred_tuple, user_data, knowledge_content, historical_data_str,
                                     language='en'):
-
+    """
+    当用户提供了备注时，调用LLM来决定最终使用哪个预测结果。
+    language: 'zh' 或 'en' (默认 en)
+    """
     print(f"\n检测到用户备注，正在启动包含历史数据的智能决策模块 (语言: {language})...")
     formula_pred, formula_explanation = formula_pred_tuple
     try:
         client = OpenAI(api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=BASE_URL)
 
-
+        # 核心修改：保留了您要求的 5 步逻辑，但添加了【输出要精简】的强指令
         if language == 'en':
             system_prompt = """
-            You are a shrimp farming expert.
-            Task: Decide the final feeding amount based on Model Prediction, Formula, History, and Remarks.
+            You are a Chief Expert in shrimp farming. Your task is to be the final decision maker.
 
-            IMPORTANT:
-            1. Be CONCISE. Do not show long reasoning steps.
-            2. Summarize key factors from Remarks/History in 2-3 sentences.
-            3. State which value you trust more and why (briefly).
-            4. End with '【Final Feeding Amount】: XX.XX' on a new line.
+            Your decision process MUST follow these steps (think deeply, but keep the output CONCISE):
+            1. Prioritize analyzing key information in the [User Remarks].
+            2. Combine [Knowledge Base] and [Historical Records] to understand the impact of the remarks.
+            3. Evaluate the two prediction values (Model vs Formula) to see which is more reasonable.
+            4. Make a final choice. **Explain your reasoning CONCISELY** (summarize key points in 2-3 sentences, avoid lengthy analysis).
+            5. At the end, you MUST strictly follow the format '【Final Feeding Amount】: XX.XX' on a new line.
             """
-            user_intro = "Answer in English. Keep it short."
+            user_intro = "Please make the final judgment based on the following info (Answer in English, keep it concise):"
             lgbm_label = "LightGBM Prediction"
             formula_label = "Formula Result"
             kb_label = "Knowledge Base"
@@ -200,16 +218,16 @@ def get_final_decision_with_remarks(lgbm_pred, formula_pred_tuple, user_data, kn
             remarks_label = "User Remarks"
         else:
             system_prompt = """
-            你是对虾养殖专家。
-            任务：结合模型预测、公式、历史和备注决定最终投喂量。
+            你是一位经验丰富的对虾养殖首席专家，任务是作为最终决策者。
 
-            重要要求：
-            1. 必须简练。不要输出冗长的思考过程。
-            2. 用2-3句话总结备注和历史记录中的关键点。
-            3. 简述你采纳某个数值的理由。
-            4. 结尾必须另起一行输出：'【最终投喂量】: XX.XX'。
+            你的决策流程必须严格遵循以下步骤（请在内心进行深度思考，但**输出结果需精简**）：
+            1. 优先分析【用户备注】中的关键信息。
+            2. 结合【知识库全文】和【历史投喂记录】，理解备注信息对投喂量的影响。
+            3. 综合所有信息，评估两个预测值哪个更合理，或提出一个更优的调整值。
+            4. 做出最终选择。**请精简地总结你的理由**（不要输出冗长的分析过程，用2-3句话直接指出核心依据）。
+            5. 在回答的最后，必须另起一行，并严格按照 '【最终投喂量】: XX.XX' 的格式给出你最终采纳的投喂量数值。
             """
-            user_intro = "请用中文回答，保持简短。"
+            user_intro = "请根据以上所有信息，做出最终的投喂量裁决（请保持回答简练）："
             lgbm_label = "LightGBM模型预测值"
             formula_label = "内置公式计算结果"
             kb_label = "知识库全文"
@@ -221,15 +239,15 @@ def get_final_decision_with_remarks(lgbm_pred, formula_pred_tuple, user_data, kn
         【{lgbm_label}】: {lgbm_pred:.4f} kg
 
         【{formula_label}】: {formula_pred:.4f} kg
-        (Info: {formula_explanation})
+        (计算依据: {formula_explanation})
         ---
 
         【{kb_label}】:
         ---
-        {knowledge_content[:500]}...
+        {knowledge_content[:800]}...
         ---
 
-        【{history_label}】 (Last 10):
+        【{history_label}】 (最近10条):
         ---
         {historical_data_str}
         ---
@@ -258,10 +276,12 @@ def get_final_decision_with_remarks(lgbm_pred, formula_pred_tuple, user_data, kn
 
 
 def log_data_to_excel(user_data, lgbm_pred, formula_pred, final_pred_text):
-
+    """
+    功能：将所有输入和三个预测结果记录到Excel文件中。
+    """
     print(f"\n正在记录数据到Excel文件: '{LOG_FILE_PATH}'...")
     try:
-
+        # 兼容中英文标签提取
         final_amount_match = re.search(r'(?:【最终投喂量】|【Final Feeding Amount】):\s*(\d+\.?\d*)', final_pred_text)
         final_amount = float(final_amount_match.group(1)) if final_amount_match else '提取失败'
 
