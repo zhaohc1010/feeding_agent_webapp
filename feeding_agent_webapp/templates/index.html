@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能投喂决策系统</title>
+    <title>{{ t['title'] }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
@@ -37,77 +37,78 @@
 <body class="text-gray-800">
 
     <header class="bg-white shadow-md sticky top-0 z-10">
-        <div class="container mx-auto px-4 py-4">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                 <!-- Icon Changed Here: Color to blue, size to h-10 w-10 -->
                  <svg class="h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-800">智能投喂决策系统</h1>
-                    <p class="text-sm text-gray-500">结合机器学习与人工智能，提供精准投喂决策</p>
+                    <h1 class="text-2xl font-bold text-gray-800">{{ t['title'] }}</h1>
+                    <p class="text-sm text-gray-500">{{ t['subtitle'] }}</p>
                 </div>
             </div>
+            <button id="lang-toggle" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded inline-flex items-center transition duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                </svg>
+                <span>{{ t['lang_btn'] }}</span>
+            </button>
         </div>
     </header>
 
     <main class="container mx-auto p-4" id="main-container">
-        <!-- Navigation Tabs -->
         <div class="mb-6 bg-white p-2 rounded-lg shadow-md flex space-x-2">
             <button id="nav-predict" class="nav-btn flex-1 text-center py-2 px-4 rounded-md font-semibold">
-                智能预测
+                {{ t['nav_predict'] }}
             </button>
             <button id="nav-history" class="nav-btn flex-1 text-center py-2 px-4 rounded-md font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200">
-                历史记录
+                {{ t['nav_history'] }}
             </button>
         </div>
 
-        <!-- Prediction View -->
         <div id="prediction-view">
             <div class="lg:flex lg:space-x-8">
-                <!-- Input Form - Balanced width -->
                 <div class="w-full lg:w-1/2">
                     <div class="bg-white p-6 rounded-lg shadow-lg">
                         <h2 class="text-xl font-bold mb-6 border-b pb-3 flex items-center space-x-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M12 21a9 9 0 110-18 9 9 0 010 18z" /></svg>
-                            <span>输入养殖参数</span>
+                            <span>{{ t['input_params_title'] }}</span>
                         </h2>
                         <form id="prediction-form" class="space-y-5">
-                            <div><label for="system_id" class="block font-medium text-gray-700">系统ID</label><input type="text" id="system_id" name="system_id" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                            <div><label for="system_id" class="block font-medium text-gray-700">{{ t['system_id'] }}</label><input type="text" id="system_id" name="system_id" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                                <div><label for="month_day" class="block font-medium text-gray-700">月日</label><input type="text" id="month_day" name="month_day" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="age_in_days" class="block font-medium text-gray-700">养殖天数</label><input type="number" step="any" id="age_in_days" name="age_in_days" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="number_of_meals" class="block font-medium text-gray-700">日投喂餐数</label><input type="number" step="any" id="number_of_meals" name="number_of_meals" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="average_water_temp" class="block font-medium text-gray-700">平均水温 (°C)</label><input type="number" step="any" id="average_water_temp" name="average_water_temp" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="average_do" class="block font-medium text-gray-700">平均溶解氧 (mg/L)</label><input type="number" step="any" id="average_do" name="average_do" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="average_ph" class="block font-medium text-gray-700">平均pH值</label><input type="number" step="any" id="average_ph" name="average_ph" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="ammonia_nitrogen" class="block font-medium text-gray-700">氨氮浓度 (mg/L)</label><input type="number" step="any" id="ammonia_nitrogen" name="ammonia_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="nitrite_nitrogen" class="block font-medium text-gray-700">亚硝酸盐浓度 (mg/L)</label><input type="number" step="any" id="nitrite_nitrogen" name="nitrite_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="weight" class="block font-medium text-gray-700">单只虾平均体重 (g)</label><input type="number" step="any" id="weight" name="weight" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="avg_daily_weight_gain" class="block font-medium text-gray-700">日均增重 (g)</label><input type="number" step="any" id="avg_daily_weight_gain" name="avg_daily_weight_gain" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="shrimp_loading_cap" class="block font-medium text-gray-700">存塘量 (斤/m³)</label><input type="number" step="any" id="shrimp_loading_cap" name="shrimp_loading_cap" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="survival_rate" class="block font-medium text-gray-700">成活率预估</label><input type="number" step="any" id="survival_rate" name="survival_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="water_body_capacity" class="block font-medium text-gray-700">水体容量 (m³)</label><input type="number" step="any" id="water_body_capacity" name="water_body_capacity" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="water_change_amount" class="block font-medium text-gray-700">换水量 (m³)</label><input type="number" step="any" id="water_change_amount" name="water_change_amount" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                                <div><label for="water_change_rate" class="block font-medium text-gray-700">换水率 (%)</label><input type="number" step="any" id="water_change_rate" name="water_change_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="month_day" class="block font-medium text-gray-700">{{ t['month_day'] }}</label><input type="text" id="month_day" name="month_day" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="age_in_days" class="block font-medium text-gray-700">{{ t['age_in_days'] }}</label><input type="number" step="any" id="age_in_days" name="age_in_days" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="number_of_meals" class="block font-medium text-gray-700">{{ t['number_of_meals'] }}</label><input type="number" step="any" id="number_of_meals" name="number_of_meals" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="average_water_temp" class="block font-medium text-gray-700">{{ t['average_water_temp'] }}</label><input type="number" step="any" id="average_water_temp" name="average_water_temp" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="average_do" class="block font-medium text-gray-700">{{ t['average_do'] }}</label><input type="number" step="any" id="average_do" name="average_do" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="average_ph" class="block font-medium text-gray-700">{{ t['average_ph'] }}</label><input type="number" step="any" id="average_ph" name="average_ph" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="ammonia_nitrogen" class="block font-medium text-gray-700">{{ t['ammonia_nitrogen'] }}</label><input type="number" step="any" id="ammonia_nitrogen" name="ammonia_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="nitrite_nitrogen" class="block font-medium text-gray-700">{{ t['nitrite_nitrogen'] }}</label><input type="number" step="any" id="nitrite_nitrogen" name="nitrite_nitrogen" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="weight" class="block font-medium text-gray-700">{{ t['weight'] }}</label><input type="number" step="any" id="weight" name="weight" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="avg_daily_weight_gain" class="block font-medium text-gray-700">{{ t['avg_daily_weight_gain'] }}</label><input type="number" step="any" id="avg_daily_weight_gain" name="avg_daily_weight_gain" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="shrimp_loading_cap" class="block font-medium text-gray-700">{{ t['shrimp_loading_cap'] }}</label><input type="number" step="any" id="shrimp_loading_cap" name="shrimp_loading_cap" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="survival_rate" class="block font-medium text-gray-700">{{ t['survival_rate'] }}</label><input type="number" step="any" id="survival_rate" name="survival_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="water_body_capacity" class="block font-medium text-gray-700">{{ t['water_body_capacity'] }}</label><input type="number" step="any" id="water_body_capacity" name="water_body_capacity" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="water_change_amount" class="block font-medium text-gray-700">{{ t['water_change_amount'] }}</label><input type="number" step="any" id="water_change_amount" name="water_change_amount" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                                <div><label for="water_change_rate" class="block font-medium text-gray-700">{{ t['water_change_rate'] }}</label><input type="number" step="any" id="water_change_rate" name="water_change_rate" required class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
                             </div>
-                            <div><label for="actual_feeding_amount" class="block font-medium text-gray-700">实际投喂量 (kg) [可选]</label><input type="number" step="any" id="actual_feeding_amount" name="actual_feeding_amount" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
-                            <div><label for="remarks" class="block font-medium text-gray-700">备注 [可选]</label><textarea id="remarks" name="remarks" rows="3" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></textarea></div>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 mt-4 text-lg">进行预测</button>
+                            <div><label for="actual_feeding_amount" class="block font-medium text-gray-700">{{ t['actual_feeding_amount'] }}</label><input type="number" step="any" id="actual_feeding_amount" name="actual_feeding_amount" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></div>
+                            <div><label for="remarks" class="block font-medium text-gray-700">{{ t['remarks'] }}</label><textarea id="remarks" name="remarks" rows="3" class="form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm text-base p-3"></textarea></div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 mt-4 text-lg">{{ t['predict_btn'] }}</button>
                         </form>
                     </div>
                 </div>
 
-                <!-- Result Display -->
                 <div class="w-full lg:w-1/2 mt-8 lg:mt-0">
                     <div id="results-area" class="bg-white p-6 rounded-lg shadow-lg min-h-full">
-                        <h2 class="text-xl font-bold mb-4 border-b pb-2">预测结果</h2>
+                        <h2 class="text-xl font-bold mb-4 border-b pb-2">{{ t['results_title'] }}</h2>
                         <div id="spinner" class="hidden text-center py-10">
                             <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                            <p class="mt-4 text-gray-600">正在调用模型计算，请稍候...</p>
+                            <p class="mt-4 text-gray-600">{{ t['loading_text'] }}</p>
                         </div>
                         <div id="placeholder" class="text-center py-20 text-gray-500">
-                            <p>提交参数后，将在此处显示最终投喂建议。</p>
+                            <p>{{ t['placeholder_text'] }}</p>
                         </div>
                         <div id="results-content" class="prose max-w-none"></div>
                     </div>
@@ -115,11 +116,10 @@
             </div>
         </div>
 
-        <!-- History View -->
         <div id="history-view" class="hidden">
             {% if error_message %}
                 <div class="mt-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <strong class="font-bold">错误!</strong>
+                    <strong class="font-bold">{{ t['error_title'] }}</strong>
                     <span class="block sm:inline">{{ error_message }}</span>
                 </div>
             {% elif systems_data %}
@@ -129,37 +129,37 @@
                         <h2 class="text-3xl font-bold system-title">{{ system_id }}</h2>
                         <div class="flex items-center space-x-2 mt-2 sm:mt-0">
                             <div class="save-status text-sm text-gray-500 transition-opacity duration-300 opacity-0"></div>
-                            <button class="add-row-btn bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">新增一行</button>
-                            <button class="save-changes-btn hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">保存更改</button>
-                            <a href="/download_log/{{ system_id }}" class="download-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">下载日志</a>
+                            <button class="add-row-btn bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">{{ t['add_row'] }}</button>
+                            <button class="save-changes-btn hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">{{ t['save_changes'] }}</button>
+                            <a href="/download_log/{{ system_id }}" class="download-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-4 rounded-lg transition duration-300 text-sm">{{ t['download_log'] }}</a>
                         </div>
                     </div>
                     <div class="overflow-x-auto history-table-container">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">月日</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">系统ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">水温(°C)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">溶氧(mg/L)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">pH值</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">氨氮(mg/L)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">亚硝酸盐(mg/L)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">换水量(m³)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">换水率(%)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">养殖天数</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">单虾重(g)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">存塘量(斤/m³)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">水体容量(m³)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成活率</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日均增重(g)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日投喂餐数</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LGBM预测(kg)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">公式预测(kg)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最终投喂量(kg)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">实际投喂量(kg)</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备注</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_date'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_month_day'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_system_id'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_temp'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_do'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_ph'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_ammonia'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_nitrite'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_water_change'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_water_rate'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_age'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_weight'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_loading'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_capacity'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_survival'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_gain'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_meals'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_lgbm'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_formula'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_final'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_actual'] }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t['col_remarks'] }}</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -196,7 +196,7 @@
                 {% endfor %}
             {% else %}
                 <div class="mt-8 text-center py-10 text-gray-500 bg-white rounded-lg shadow-lg">
-                    <p>当前没有任何系统的历史记录。</p>
+                    <p>{{ t['no_history'] }}</p>
                 </div>
             {% endif %}
         </div>
@@ -211,6 +211,20 @@
             const predictionView = document.getElementById('prediction-view');
             const historyView = document.getElementById('history-view');
             let changesToSave = {};
+
+            // 获取当前语言设置
+            const currentLang = new URLSearchParams(window.location.search).get('lang') || 'zh';
+
+            // 语言切换按钮逻辑
+            const langBtn = document.getElementById('lang-toggle');
+            if(langBtn) {
+                langBtn.addEventListener('click', () => {
+                    const newLang = currentLang === 'zh' ? 'en' : 'zh';
+                    const url = new URL(window.location);
+                    url.searchParams.set('lang', newLang);
+                    window.location.href = url.toString();
+                });
+            }
 
             // --- Robust State Management ---
             const APP_STATE_KEY = 'feedingAppState';
@@ -298,6 +312,9 @@
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData.entries());
 
+                // 将当前语言传递给后端
+                data.language = currentLang;
+
                 const spinner = document.getElementById('spinner');
                 const placeholder = document.getElementById('placeholder');
                 const resultsContent = document.getElementById('results-content');
@@ -316,7 +333,7 @@
                     });
                     const result = await response.json();
                     if (!response.ok) {
-                        throw new Error(result.error || `HTTP 错误! 状态: ${response.status}`);
+                        throw new Error(result.error || `HTTP Error: ${response.status}`);
                     }
 
                     resultsContent.innerHTML = marked.parse(result.recommendation);
@@ -326,7 +343,7 @@
                     }, 1500);
 
                 } catch (error) {
-                    resultsContent.innerHTML = `<p class="text-red-500 font-bold">请求出错:</p><p class="text-red-700">${error.message}</p>`;
+                    resultsContent.innerHTML = `<p class="text-red-500 font-bold">Request Failed:</p><p class="text-red-700">${error.message}</p>`;
                 } finally {
                     spinner.classList.add('hidden');
                 }
@@ -353,7 +370,7 @@
                     };
 
                     try {
-                        saveStatus.textContent = '正在保存...';
+                        saveStatus.textContent = currentLang === 'en' ? 'Saving...' : '正在保存...';
                         saveStatus.classList.remove('text-red-500', 'text-green-500');
                         saveStatus.classList.add('opacity-100');
 
@@ -368,7 +385,7 @@
                         reloadWithState();
 
                     } catch (error) {
-                        saveStatus.textContent = `保存失败: ${error.message}`;
+                        saveStatus.textContent = (currentLang === 'en' ? 'Error: ' : '保存失败: ') + error.message;
                         saveStatus.classList.add('text-red-500');
                         setTimeout(() => saveStatus.classList.remove('opacity-100'), 4000);
                     }
@@ -387,7 +404,7 @@
                         }
                         reloadWithState();
                     } catch (error) {
-                        alert(`新增失败: ${error.message}`);
+                        alert(`Error: ${error.message}`);
                     }
                 }
             });
@@ -413,4 +430,3 @@
     </script>
 </body>
 </html>
-
