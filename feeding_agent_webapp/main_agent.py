@@ -2,12 +2,12 @@
 
 import os
 
-# --- 从其他模块导入核心功能 ---
+
 from core_logic import (
     read_knowledge_base,
     read_historical_data,
     predict_with_lightgbm,
-    calculate_from_formulas,  # 【修改】导入新的公式计算函数
+    calculate_from_formulas,  
     get_final_decision_with_remarks,
     log_data_to_excel
 )
@@ -129,4 +129,5 @@ def run_agent():
 
 
 if __name__ == "__main__":
+
     run_agent()
