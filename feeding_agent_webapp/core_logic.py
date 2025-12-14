@@ -36,10 +36,6 @@ def read_historical_data():
         return "读取失败。"
 
 
-# ==============================================================================
-#                               模型预测功能
-# ==============================================================================
-
 def predict_with_lightgbm(user_data):
 
     print("\n[LightGBM] 启动预测...")
@@ -243,4 +239,5 @@ def log_data_to_excel(user_data, lgbm_pred, formula_pred, final_pred_text):
         df_to_save.to_excel(LOG_FILE_PATH, index=False, engine='openpyxl')
         print("Excel 记录成功。")
     except Exception as e:
+
         print(f"Excel 记录失败: {e}")
